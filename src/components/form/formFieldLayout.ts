@@ -50,6 +50,29 @@ export const formOutlinedSingleLineInputSx = {
     },
 } as const;
 
+export const formOutlinedMultilineSx = {
+    "& .MuiInputBase-root": {
+        bgcolor: "surface.main",
+        borderRadius: "1rem",
+        fontSize: 14,
+        alignItems: "flex-start",
+    },
+    "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "transparent",
+    },
+    "& .MuiInputBase-root:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: "divider",
+    },
+    "& .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "primary.main",
+        borderWidth: 1,
+    },
+    "& .MuiOutlinedInput-input, & .MuiInputBase-input": {
+        paddingBlock: "12px",
+        paddingInline: "14px",
+    },
+} as const;
+
 /** Positions the Autocomplete popup arrow on the inline-end (right in LTR, left in RTL). */
 export const formAutocompleteDirSx = (dir: "ltr" | "rtl") =>
     ({

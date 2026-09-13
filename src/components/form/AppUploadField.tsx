@@ -1,23 +1,27 @@
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
-import UploadOutlinedIcon from "@mui/icons-material/UploadOutlined";
-import {
-    Box,
-    IconButton,
-    LinearProgress,
-    Typography,
-} from "@mui/material";
-import { useEffect, useState, type ChangeEvent } from "react";
+import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
+import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
+import InsertDriveFileOutlined from "@mui/icons-material/InsertDriveFileOutlined";
+import { Box, LinearProgress, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import AppBtn from "@/components/ui/AppBtn";
 import { formFieldLabelSx } from "./formFieldLayout";
+
+export type UploadVariant = "compact" | "dropzone";
 
 interface AppUploadFieldProps {
     name: string;
     label: string;
     placeholder?: string;
+    hint?: string;
+    browseLabel?: string;
+    replaceLabel?: string;
     disabled?: boolean;
     multiple?: boolean;
     accept?: string;
+    variant?: UploadVariant;
 }
 
 function formatBytes(bytes: number) {
@@ -40,112 +44,109 @@ function normalizeFiles(value: unknown): File[] {
     return [];
 }
 
-function UploadFileRow({
-    file,
-    onDelete,
-}: {
-    file: File;
-    onDelete: () => void;
-}) {
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const isImage = file.type.startsWith("image/");
-    const { i18n } = useTranslation();
-    const dir = i18n.dir()
+function useVideoDuration(file: File | null) {
+    const [duration, setDuration] = useState("");
 
     useEffect(() => {
-        if (!isImage) {
-            setPreviewUrl(null);
+        if (!file || !file.type.startsWith("video/")) {
+            setDuration("");
             return;
         }
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewUrl(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [file, isImage]);
+
+        const url = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        video.preload = "metadata";
+        video.onloadedmetadata = () => {
+            const total = Number.isFinite(video.duration) ? video.duration : 0;
+            const minutes = Math.floor(total / 60);
+            const seconds = Math.round(total % 60).toString().padStart(2, "0");
+            setDuration(`${minutes}:${seconds}`);
+            URL.revokeObjectURL(url);
+        };
+        video.src = url;
+
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
+
+    return duration;
+}
+
+function UploadFileRow({
+    file,
+    onReplace,
+    replaceLabel,
+}: {
+    file: File;
+    onReplace: () => void;
+    replaceLabel: string;
+}) {
+    const { t, i18n } = useTranslation();
+    const duration = useVideoDuration(file);
 
     return (
         <Box
             sx={{
-                width: "100%",
-                minWidth: 0,
-                overflow: "hidden",
                 display: "flex",
-                gap: "12px",
                 alignItems: "center",
+                gap: 1.5,
+                p: 1.5,
+                borderRadius: "1rem",
+                bgcolor: "surface.main",
             }}
         >
-            <IconButton
-                onClick={onDelete}
-                size="small"
-                sx={{ color: "text.secondary", flexShrink: 0 }}
+            <Box
+                sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1.5,
+                    bgcolor: "background.paper",
+                    display: "grid",
+                    placeItems: "center",
+                    color: "text.secondary",
+                    flexShrink: 0,
+                }}
             >
-                <DeleteOutlineIcon />
-            </IconButton>
-
+                <InsertDriveFileOutlined sx={{ fontSize: 20 }} />
+            </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                    sx={{
-                        fontSize: "14px",
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                    }}
-                >
-                    {file.name}
-                </Typography>
-                <Typography sx={{ fontSize: "12px", color: "text.secondary", mt: 0.5 }}>
-                    {formatBytes(file.size)}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {file.name}
+                    </Typography>
+                    <Box
+                        component="button"
+                        type="button"
+                        onClick={onReplace}
+                        sx={{
+                            border: 0,
+                            bgcolor: "transparent",
+                            color: "primary.main",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        {replaceLabel}
+                    </Box>
+                </Box>
+                <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.25 }}>
+                    {duration ? `${duration} · ` : ""}
+                    {formatBytes(file.size)} · {t("form.uploaded")}
                 </Typography>
                 <LinearProgress
-                    dir={dir}
+                    dir={i18n.dir()}
                     variant="determinate"
-                    value={15}
+                    value={100}
                     sx={{
-                        width: "100%",
-                        maxWidth: "100%",
-                        mt: 1.25,
+                        mt: 1,
                         height: 6,
                         borderRadius: 999,
-                        overflow: "hidden",
-                        backgroundColor: "#F1D9CC",
-                        "& .MuiLinearProgress-bar": {
-                            backgroundColor: "primary.main",
-                        },
+                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                        "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
                     }}
                 />
             </Box>
-
-            {previewUrl ? (
-                <Box
-                    component="img"
-                    src={previewUrl}
-                    alt={file.name}
-                    sx={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 2,
-                        objectFit: "cover",
-                        flexShrink: 0,
-                    }}
-                />
-            ) : (
-                <Box
-                    sx={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 2,
-                        backgroundColor: "#F7F7F7",
-                        border: "1px solid",
-                        borderColor: "divider",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                    }}
-                >
-                    <UploadOutlinedIcon sx={{ color: "text.secondary" }} />
-                </Box>
-            )}
         </Box>
     );
 }
@@ -154,18 +155,26 @@ export default function AppUploadField({
     name,
     label,
     placeholder,
+    hint,
+    browseLabel,
+    replaceLabel,
     disabled = false,
     multiple = false,
     accept,
+    variant = "dropzone",
 }: AppUploadFieldProps) {
     const { control } = useFormContext();
     const { t } = useTranslation();
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [dragging, setDragging] = useState(false);
 
-    const uploadPlaceholder = placeholder || "قم بإرفاق الملف";
+    const uploadPlaceholder = placeholder || t("form.drop_file");
+    const browseText = browseLabel || t("form.browse_files");
+    const replaceText = replaceLabel || t("form.replace_file");
 
     return (
         <Box sx={{ width: "100%", minWidth: 0 }}>
-            <Typography sx={formFieldLabelSx}>{label}</Typography>
+            {label ? <Typography sx={formFieldLabelSx}>{label}</Typography> : null}
 
             <Controller
                 name={name}
@@ -173,51 +182,86 @@ export default function AppUploadField({
                 render={({ field, fieldState: { error } }) => {
                     const files = normalizeFiles(field.value);
 
-                    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-                        const selectedFiles = Array.from(event.target.files ?? []);
+                    const applyFiles = (selectedFiles: File[]) => {
                         if (!selectedFiles.length) return;
+                        field.onChange(multiple ? [...files, ...selectedFiles] : selectedFiles[0] ?? null);
+                    };
 
-                        field.onChange(
-                            multiple
-                                ? [...files, ...selectedFiles]
-                                : selectedFiles[0] ?? null
-                        );
+                    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+                        applyFiles(Array.from(event.target.files ?? []));
                         event.target.value = "";
                     };
 
-                    const handleDelete = (index: number) => {
-                        if (!multiple) {
-                            field.onChange(null);
-                            return;
-                        }
-
-                        const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
-                        field.onChange(nextFiles.length ? nextFiles : null);
+                    const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+                        event.preventDefault();
+                        setDragging(false);
+                        if (disabled) return;
+                        applyFiles(Array.from(event.dataTransfer.files ?? []));
                     };
 
                     return (
                         <>
                             <Box
                                 component="label"
+                                onDragOver={(event) => {
+                                    event.preventDefault();
+                                    if (!disabled) setDragging(true);
+                                }}
+                                onDragLeave={() => setDragging(false)}
+                                onDrop={handleDrop}
                                 sx={{
                                     display: "flex",
+                                    flexDirection: variant === "dropzone" ? "column" : "row",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    gap: 1,
-                                    padding: "12px 16px",
-                                    borderRadius: 2,
-                                    border: "1px solid",
-                                    borderColor: error ? "error.main" : "divider",
-                                    backgroundColor: "#fff",
+                                    gap: variant === "dropzone" ? 1.25 : 1,
+                                    px: 2,
+                                    py: variant === "dropzone" ? 4 : 1.5,
+                                    borderRadius: "1rem",
+                                    border: "1px dashed",
+                                    borderColor: error ? "error.main" : dragging ? "primary.main" : "divider",
+                                    bgcolor: dragging ? (theme) => alpha(theme.palette.primary.main, 0.06) : "surface.main",
                                     cursor: disabled ? "not-allowed" : "pointer",
+                                    textAlign: "center",
                                 }}
                             >
-                                <UploadOutlinedIcon sx={{ color: "text.secondary" }} />
-                                <Typography sx={{ fontSize: "14px", color: "text.secondary" }}>
+                                <Box
+                                    sx={{
+                                        width: 48,
+                                        height: 48,
+                                        borderRadius: "50%",
+                                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                                        color: "primary.main",
+                                        display: "grid",
+                                        placeItems: "center",
+                                    }}
+                                >
+                                    <CloudUploadOutlined />
+                                </Box>
+                                <Typography sx={{ fontSize: 14, fontWeight: 700, color: "text.primary" }}>
                                     {uploadPlaceholder}
                                 </Typography>
+                                {hint && (
+                                    <Typography sx={{ fontSize: 12, color: "text.secondary", maxWidth: 420 }}>
+                                        {hint}
+                                    </Typography>
+                                )}
+                                <AppBtn
+                                    customType="outline"
+                                    type="button"
+                                    disabled={disabled}
+                                    startIcon={<FolderOpenOutlined sx={{ fontSize: 16 }} />}
+                                    onClick={(event) => {
+                                        event.preventDefault();
+                                        inputRef.current?.click();
+                                    }}
+                                    sx={{ borderRadius: 999, mt: 0.5 }}
+                                >
+                                    {browseText}
+                                </AppBtn>
                                 <Box
                                     component="input"
+                                    ref={inputRef}
                                     type="file"
                                     multiple={multiple}
                                     accept={accept}
@@ -227,34 +271,21 @@ export default function AppUploadField({
                                 />
                             </Box>
 
-                            {files.length > 0 ? (
-                                <Box sx={{
-                                    width: "100%",
-                                    minWidth: 0,
-                                    overflow: "hidden",
-                                    mt: 2,
-                                    display: "grid",
-                                    gap: 1.5,
-                                }}>
+                            {files.length > 0 && (
+                                <Box sx={{ mt: 2, display: "grid", gap: 1.5 }}>
                                     {files.map((file, index) => (
                                         <UploadFileRow
                                             key={`${file.name}-${file.size}-${index}`}
                                             file={file}
-                                            onDelete={() => handleDelete(index)}
+                                            replaceLabel={replaceText}
+                                            onReplace={() => inputRef.current?.click()}
                                         />
                                     ))}
                                 </Box>
-                            ) : null}
+                            )}
 
                             {error?.message ? (
-                                <Typography
-                                    variant="caption"
-                                    sx={{
-                                        color: "error.main",
-                                        mt: 0.5,
-                                        display: "block",
-                                    }}
-                                >
+                                <Typography variant="caption" sx={{ color: "error.main", mt: 0.5, display: "block" }}>
                                     {t(error.message)}
                                 </Typography>
                             ) : null}

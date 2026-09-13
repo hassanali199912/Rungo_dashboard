@@ -21,6 +21,7 @@ const AppTextAreaField = lazy(() => import("./AppTextAreaField"));
 const AppRadioField = lazy(() => import("./AppRadioField"));
 const AppRichTextField = lazy(() => import("./AppRichTextField"));
 const AppUploadField = lazy(() => import("./AppUploadField"));
+const AppPosterField = lazy(() => import("./AppPosterField"));
 const ProfileImageUploader = lazy(() => import("./ProfileImageUploader"));
 const AppCardExpiryField = lazy(() => import("./AppCardExpiryField"));
 const AppCvvField = lazy(() => import("./AppCvvField"));
@@ -42,6 +43,7 @@ type FieldType =
     | "number"
     | "radio"
     | "upload"
+    | "poster"
     | "profileImage"
     | "color"
     | "cardExpiry"
@@ -69,11 +71,25 @@ interface AppFormFieldProps {
     /** For `type="emailStatus"`: verified / unverified badge + helper text. */
     emailStatus?: EmailStatus;
     startIcon?: ReactNode;
+    maxLength?: number;
+    endAction?: ReactNode;
+    hint?: string;
+    browseLabel?: string;
+    replaceLabel?: string;
+    uploadVariant?: "compact" | "dropzone";
+    freeSolo?: boolean;
 }
 
 export default function AppFormField({
     type,
     startIcon,
+    maxLength,
+    endAction,
+    hint,
+    browseLabel,
+    replaceLabel,
+    uploadVariant,
+    freeSolo,
     ...rest
 }: AppFormFieldProps) {
     const renderField = () => {
@@ -106,6 +122,7 @@ export default function AppFormField({
                     <AppMultiAutocomplete
                         {...rest}
                         options={rest.options as MultiSelectOption[]}
+                        freeSolo={freeSolo}
                     />
                 );
             case "otp":
@@ -134,8 +151,22 @@ export default function AppFormField({
                         name={rest.name}
                         label={rest.label}
                         placeholder={rest.placeholder}
+                        hint={hint}
+                        browseLabel={browseLabel}
+                        replaceLabel={replaceLabel}
                         disabled={rest.disabled}
                         multiple={rest.multiple}
+                        accept={rest.accept}
+                        variant={uploadVariant}
+                    />
+                );
+            case "poster":
+                return (
+                    <AppPosterField
+                        name={rest.name}
+                        label={rest.label}
+                        hint={hint}
+                        disabled={rest.disabled}
                         accept={rest.accept}
                     />
                 );
@@ -156,7 +187,7 @@ export default function AppFormField({
                 return <AppCvvField {...rest} />;
             case "text":
             default:
-                return <AppTextField {...rest} startIcon={startIcon} />;
+                return <AppTextField {...rest} startIcon={startIcon} maxLength={maxLength} endAction={endAction} />;
         }
     };
 

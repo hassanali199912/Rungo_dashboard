@@ -8,8 +8,8 @@ import {
     formOutlinedSingleLineInputSx,
 } from "./formFieldLayout";
 
-const DEFAULT_CHIP_BG = "#F1F5F9";
-const DEFAULT_CHIP_COLOR = "#475569";
+const DEFAULT_CHIP_BG = "surface.main";
+const DEFAULT_CHIP_COLOR = "text.secondary";
 
 interface AppMultiAutocompleteProps {
     name: string;
@@ -18,6 +18,7 @@ interface AppMultiAutocompleteProps {
     placeholder?: string;
     disabled?: boolean;
     limitTags?: number;
+    freeSolo?: boolean;
 }
 
 function getChipStyles(option: MultiSelectOption) {
@@ -34,6 +35,7 @@ export default function AppMultiAutocomplete({
     placeholder,
     disabled = false,
     limitTags,
+    freeSolo = false,
 }: AppMultiAutocompleteProps) {
     const { control } = useFormContext();
     const { t, i18n } = useTranslation();
@@ -46,21 +48,32 @@ export default function AppMultiAutocomplete({
                 name={name}
                 control={control}
                 render={({ field, fieldState }) => {
-                    const selectedOptions = options.filter((opt) =>
-                        (field.value as string[] | undefined)?.includes(opt.value),
+                    const selectedValues = (field.value as string[] | undefined) ?? [];
+                    const selectedOptions = selectedValues.map(
+                        (value) =>
+                            options.find((opt) => opt.value === value) ?? {
+                                value,
+                                label: value,
+                            },
                     );
 
                     return (
                         <Autocomplete
                             multiple
+                            freeSolo={freeSolo}
                             disabled={disabled}
                             limitTags={limitTags}
                             options={options}
-                            getOptionLabel={(option) => option.label}
-                            isOptionEqualToValue={(option, value) => option.value === value.value}
+                            getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
+                            isOptionEqualToValue={(option, value) =>
+                                (typeof option === "string" ? option : option.value) ===
+                                (typeof value === "string" ? value : value.value)
+                            }
                             value={selectedOptions}
                             onChange={(_, value) =>
-                                field.onChange(value.map((item) => item.value))
+                                field.onChange(
+                                    value.map((item) => (typeof item === "string" ? item : item.value)),
+                                )
                             }
                             renderTags={(tagValue, getTagProps) =>
                                 tagValue.map((option, index) => {
@@ -74,7 +87,7 @@ export default function AppMultiAutocomplete({
                                             size="small"
                                             {...chipProps}
                                             sx={{
-                                                borderRadius: 2,
+                                                borderRadius: 999,
                                                 fontWeight: 600,
                                                 fontSize: "13px",
                                                 height: 28,

@@ -1,4 +1,11 @@
 {
+  "form": {
+    "drop_file": "Drag and drop your file here",
+    "browse_files": "Browse Files",
+    "replace_file": "Replace",
+    "uploaded": "Uploaded",
+    "upload_poster": "Upload 9:16"
+  },
   "brand": {
     "name": "RunGo"
   },
@@ -173,6 +180,9 @@
     },
     "crumb_instructor": "Instructor",
     "crumb_studio": "Studio",
+    "crumb": {
+      "new": "Upload New Short"
+    },
     "search": "Search shorts, lectures, coin logs...",
     "profile_name": "Prof",
     "eyebrow": "Creator Studio Pro",
@@ -280,6 +290,52 @@
         "brand_body": "How to lock a primary, carbon, and accent token set that stays readable in light and dark.",
         "knife_title": "Knife Skills Basics",
         "knife_body": "Grip, rock chop, and safe passing — the three moves every kitchen short should teach first."
+      },
+      "publisher": {
+        "title": "Studio Publisher",
+        "save_draft": "Save Draft",
+        "publish_feed": "Publish to Public Feed",
+        "publish_now": "Publish Now",
+        "preview_student": "Preview Student View",
+        "preview_title": "Feed Preview",
+        "preview_subtitle": "9:16 vertical",
+        "live_view": "Live student view simulation",
+        "untitled": "Untitled short",
+        "upload_title": "Upload Video File",
+        "upload_subtitle": "Deliver a high-resolution 9:16 vertical clip for one recording lesson.",
+        "drop_video": "Drag and drop your video file here",
+        "drop_hint": "Supports vertical 9:16, H.264, MP4, MOV or WebM (up to 200MB)",
+        "browse": "Browse Files",
+        "replace": "Replace Video",
+        "meta_title": "Lesson Metadata & Media",
+        "meta_subtitle": "Artifact facts with school-ready indexed discovery tags.",
+        "video_title": "Video Title",
+        "video_title_placeholder": "Name the short in one tight line",
+        "default_title": "React useCallback vs useMemo in 5s",
+        "polish": "Polish",
+        "summary": "Key Learning / Code Summary",
+        "summary_placeholder": "What should a student remember after this short?",
+        "default_summary": "- useCallback preserves a function reference to prevent unnecessary child re-renders.\n- useMemo caches a calculated result between renders.",
+        "tags": "Tags & Learning Pathways",
+        "add_tag": "Add tag",
+        "tag_frontend": "Frontend Architecture",
+        "tag_react": "React",
+        "tag_js": "JavaScript",
+        "tag_performance": "Performance",
+        "poster": "Feed Poster Cover (9:16)",
+        "poster_hint": "First frame or a custom still students see before play.",
+        "autosave": "Unsaved drafts auto-saved every 30 seconds",
+        "draft_saved": "Draft saved to your studio library.",
+        "published": "Short published to the public feed.",
+        "errors": {
+          "title": "Add a video title",
+          "title_max": "Keep the title under 70 characters",
+          "summary": "Add a short learning summary",
+          "tags": "Add at least one tag",
+          "video": "Upload a vertical video file",
+          "video_size": "Video must be 200MB or smaller",
+          "video_type": "Use MP4, MOV, or WebM"
+        }
       }
     }
   },

@@ -67,6 +67,7 @@ export default function Shorts() {
             action={{
                 label: t("dashboard.shorts.upload"),
                 icon: Add,
+                to: "/dashboard/shorts/new",
             }}
         >
             <StatisticCards items={stats} />

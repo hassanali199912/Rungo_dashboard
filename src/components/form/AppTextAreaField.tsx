@@ -1,7 +1,7 @@
-import { Box, TextareaAutosize, Typography } from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { formFieldLabelSx } from "./formFieldLayout";
+import { formFieldLabelSx, formOutlinedMultilineSx } from "./formFieldLayout";
 
 interface AppTextAreaFieldProps {
     name: string;
@@ -21,52 +21,34 @@ export default function AppTextAreaField({
     maxRows,
 }: AppTextAreaFieldProps) {
     const { control } = useFormContext();
-    const { t } = useTranslation();
-    return (
-        <Box sx={{
-            width: "100%"
-        }}>
-            <Typography sx={[formFieldLabelSx, { fontWeight: 500 }]}>
-                {label}
-            </Typography>
+    const { t, i18n } = useTranslation();
+    const dir = i18n.dir();
 
+    return (
+        <Box sx={{ width: "100%" }}>
+            <Typography sx={formFieldLabelSx}>{label}</Typography>
             <Controller
                 name={name}
                 control={control}
                 render={({ field, fieldState: { error } }) => (
-                    <>
-                        <TextareaAutosize
-                            {...field}
-                            placeholder={placeholder}
-                            disabled={disabled}
-                            minRows={minRows}
-                            maxRows={maxRows}
-                            style={{
-                                width: "100%",
-                                padding: "12px",
-                                borderRadius: 8,
-                                border: `1px solid ${error ? "#d32f2f" : "#dcdcdc"}`,
-                                fontFamily: "inherit",
-                                fontSize: "1rem",
-                                resize: "vertical",
-                                outline: "none",
-                                background:"#fff"
-                            }}
-                        />
-
-                        {error && (
-                            <Typography
-                                variant="caption"
-                                sx={{
-                                    color: "error.main",
-                                    mt: 0.5,
-                                    display: "block",
-                                }}
-                            >
-                                {t(`${error?.message}`)}
-                            </Typography>
-                        )}
-                    </>
+                    <TextField
+                        {...field}
+                        multiline
+                        fullWidth
+                        minRows={minRows}
+                        maxRows={maxRows}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        error={!!error}
+                        helperText={error?.message ? t(error.message) : ""}
+                        slotProps={{
+                            htmlInput: { dir },
+                            formHelperText: {
+                                sx: { textAlign: dir === "rtl" ? "right" : "left" },
+                            },
+                        }}
+                        sx={formOutlinedMultilineSx}
+                    />
                 )}
             />
         </Box>

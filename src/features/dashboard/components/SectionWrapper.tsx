@@ -9,6 +9,8 @@ export type SectionAction = {
     icon?: ElementType;
     onClick?: () => void;
     to?: string;
+    type?: "button" | "submit";
+    variant?: "primary" | "outline";
 };
 
 type SectionWrapperProps = {
@@ -16,12 +18,13 @@ type SectionWrapperProps = {
     title?: string;
     description?: string;
     action?: SectionAction;
+    actions?: SectionAction[];
     sx?: SxProps<Theme>;
 };
 
-export default function SectionWrapper({ children, title, description, action, sx }: SectionWrapperProps) {
-    const ActionIcon = action?.icon;
-    const showHeader = Boolean(title || description || action);
+export default function SectionWrapper({ children, title, description, action, actions, sx }: SectionWrapperProps) {
+    const headerActions = actions?.length ? actions : action ? [action] : [];
+    const showHeader = Boolean(title || description || headerActions.length);
 
     return (
         <Box
@@ -65,23 +68,38 @@ export default function SectionWrapper({ children, title, description, action, s
                         )}
                     </Box>
 
-                    {action && (
-                        <AppBtn
-                            customType="primary"
-                            to={action.to}
-                            onClick={action.onClick}
-                            startIcon={ActionIcon ? <ActionIcon sx={{ fontSize: 18 }} /> : undefined}
+                    {headerActions.length > 0 && (
+                        <Box
                             sx={{
-                                borderRadius: 999,
-                                px: 2.25,
-                                py: 1,
-                                flexShrink: 0,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 1,
                                 alignSelf: { xs: "stretch", sm: "center" },
-                                whiteSpace: "nowrap",
                             }}
                         >
-                            {action.label}
-                        </AppBtn>
+                            {headerActions.map((item) => {
+                                const ActionIcon = item.icon;
+                                return (
+                                    <AppBtn
+                                        key={item.label}
+                                        customType={item.variant ?? "primary"}
+                                        type={item.type ?? "button"}
+                                        to={item.to}
+                                        onClick={item.onClick}
+                                        startIcon={ActionIcon ? <ActionIcon sx={{ fontSize: 18 }} /> : undefined}
+                                        sx={{
+                                            borderRadius: 999,
+                                            px: 2.25,
+                                            py: 1,
+                                            flexShrink: 0,
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {item.label}
+                                    </AppBtn>
+                                );
+                            })}
+                        </Box>
                     )}
                 </Box>
             )}

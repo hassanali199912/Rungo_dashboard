@@ -15,10 +15,15 @@ const DashboardBreadcrumbs = () => {
                 { label: t("dashboard.crumb_studio"), path: "/dashboard" },
             ];
             if (rest) {
-                const segment = rest.split("/")[0];
-                crumbs.push({
-                    label: t(`dashboard.nav.${segment}`, { defaultValue: segment }),
-                    path: `/dashboard/${segment}`,
+                let acc = "/dashboard";
+                rest.split("/").filter(Boolean).forEach((segment) => {
+                    acc += `/${segment}`;
+                    crumbs.push({
+                        label: t(`dashboard.crumb.${segment}`, {
+                            defaultValue: t(`dashboard.nav.${segment}`, { defaultValue: segment }),
+                        }),
+                        path: acc,
+                    });
                 });
             }
             return crumbs;

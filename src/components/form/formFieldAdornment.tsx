@@ -13,6 +13,16 @@ export function formStartAdornment(startIcon?: ReactNode) {
     );
 }
 
+export function formEndAdornment(endAction?: ReactNode) {
+    if (!endAction) return undefined;
+
+    return (
+        <InputAdornment position="end" sx={{ pr: 0.5 }}>
+            {endAction}
+        </InputAdornment>
+    );
+}
+
 export function formPasswordToggleAdornment(
     showPassword: boolean,
     onToggle: () => void,
