@@ -6,6 +6,7 @@ export type ContentFilterState = {
     sort: string;
     status: string;
     view: FilterViewMode;
+    tier: string;
 };
 
 export type ContentFilterOption = {
@@ -20,4 +21,5 @@ export const defaultContentFilter: ContentFilterState = {
     sort: "plays",
     status: "all",
     view: "grid",
+    tier: "all",
 };

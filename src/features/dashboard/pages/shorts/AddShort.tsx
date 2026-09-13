@@ -15,6 +15,7 @@ import AppBtn from "@/components/ui/AppBtn";
 import { showSuccessToast } from "@/components/ui/appToast";
 import { useAuth } from "@/provider/AuthProvider";
 import { addShortSchema, type AddShortValues } from "@/schema";
+import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import SectionWrapper from "../../components/SectionWrapper";
 import ShortFeedPreview from "../../components/shorts/ShortFeedPreview";
 
@@ -172,14 +173,17 @@ export default function AddShort() {
                                         <Button
                                             type="button"
                                             onClick={polishTitle}
-                                            startIcon={<AutoAwesomeOutlined sx={{ fontSize: 16 }} />}
-                                            sx={{
-                                                borderRadius: 999,
-                                                color: "primary.main",
-                                                fontWeight: 700,
-                                                textTransform: "none",
-                                                px: 1.25,
-                                            }}
+                                            startIcon={<AutoAwesomeOutlined sx={btnIconStartSx} />}
+                                            sx={[
+                                                btnIconSlotReset,
+                                                {
+                                                    borderRadius: 999,
+                                                    color: "primary.main",
+                                                    fontWeight: 700,
+                                                    textTransform: "none",
+                                                    px: 1.25,
+                                                },
+                                            ]}
                                         >
                                             {t("dashboard.shorts.publisher.polish")}
                                         </Button>
@@ -232,7 +236,7 @@ export default function AddShort() {
                         <AppBtn
                             customType="outline"
                             type="button"
-                            startIcon={<SmartphoneOutlined sx={{ fontSize: 18 }} />}
+                            startIcon={<SmartphoneOutlined sx={btnIconStartSx} />}
                             sx={{ borderRadius: 999 }}
                         >
                             {t("dashboard.shorts.publisher.preview_student")}
@@ -240,7 +244,7 @@ export default function AddShort() {
                         <AppBtn
                             customType="primary"
                             type="submit"
-                            startIcon={<IosShareOutlined sx={{ fontSize: 18 }} />}
+                            startIcon={<IosShareOutlined sx={btnIconStartSx} />}
                             sx={{ borderRadius: 999 }}
                         >
                             {t("dashboard.shorts.publisher.publish_now")}

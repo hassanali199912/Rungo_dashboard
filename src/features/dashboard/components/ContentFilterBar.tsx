@@ -17,6 +17,8 @@ type ContentFilterBarProps = {
     sortLabel: string;
     sortOptions: ContentFilterOption[];
     statusOptions: ContentFilterOption[];
+    tierLabel?: string;
+    tierOptions?: ContentFilterOption[];
 };
 
 const pillFieldSx = {
@@ -40,12 +42,14 @@ export default function ContentFilterBar({
     sortLabel,
     sortOptions,
     statusOptions,
+    tierLabel,
+    tierOptions,
 }: ContentFilterBarProps) {
     const { t } = useTranslation();
 
     const patch = (partial: Partial<ContentFilterState>) => onChange({ ...value, ...partial });
 
-    const handleSelect = (key: "domain" | "sort") => (event: SelectChangeEvent<string>) => {
+    const handleSelect = (key: "domain" | "sort" | "tier") => (event: SelectChangeEvent<string>) => {
         patch({ [key]: event.target.value });
     };
 
@@ -102,6 +106,32 @@ export default function ContentFilterBar({
                         ))}
                     </Select>
                 </Box>
+
+                {tierLabel && tierOptions?.length ? (
+                    <Box sx={pillFieldSx}>
+                        <Typography sx={{ fontSize: 13, color: "text.secondary", whiteSpace: "nowrap" }}>
+                            {tierLabel}:
+                        </Typography>
+                        <Select
+                            variant="standard"
+                            disableUnderline
+                            value={value.tier}
+                            onChange={handleSelect("tier")}
+                            sx={{
+                                flex: 1,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                "& .MuiSelect-select": { py: 1, paddingInlineEnd: 2 },
+                            }}
+                        >
+                            {tierOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value} sx={{ fontSize: 13 }}>
+                                    {option.label}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </Box>
+                ) : null}
 
                 <Box sx={pillFieldSx}>
                     <Typography sx={{ fontSize: 13, color: "text.secondary", whiteSpace: "nowrap" }}>

@@ -3,6 +3,7 @@ import { alpha } from "@mui/material/styles";
 import type { SxProps, Theme } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 import AppBtn from "@/components/ui/AppBtn";
+import { btnIconStartSx } from "@/styles/btnStyle";
 
 export type SectionAction = {
     label: string;
@@ -86,7 +87,7 @@ export default function SectionWrapper({ children, title, description, action, a
                                         type={item.type ?? "button"}
                                         to={item.to}
                                         onClick={item.onClick}
-                                        startIcon={ActionIcon ? <ActionIcon sx={{ fontSize: 18 }} /> : undefined}
+                                        startIcon={ActionIcon ? <ActionIcon sx={btnIconStartSx} /> : undefined}
                                         sx={{
                                             borderRadius: 999,
                                             px: 2.25,

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "r
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import AppBtn from "@/components/ui/AppBtn";
+import { btnIconStartSx } from "@/styles/btnStyle";
 import { formFieldLabelSx } from "./formFieldLayout";
 
 export type UploadVariant = "compact" | "dropzone";
@@ -250,7 +251,7 @@ export default function AppUploadField({
                                     customType="outline"
                                     type="button"
                                     disabled={disabled}
-                                    startIcon={<FolderOpenOutlined sx={{ fontSize: 16 }} />}
+                                    startIcon={<FolderOpenOutlined sx={btnIconStartSx} />}
                                     onClick={(event) => {
                                         event.preventDefault();
                                         inputRef.current?.click();

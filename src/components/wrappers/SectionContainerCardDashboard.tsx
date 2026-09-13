@@ -4,7 +4,7 @@ import { MoreHoriz } from "@mui/icons-material"
 import { Box, IconButton, Menu, MenuItem, Typography } from "@mui/material"
 import { useState, type MouseEvent, type ReactNode } from "react"
 import AppBtn from "../ui/AppBtn"
-import { BtnLayout } from "@/styles/btnStyle"
+import { BtnLayout, withBtnIconSx } from "@/styles/btnStyle"
 import type { ActionLable, MultibleActionWithIcon } from "@/shared/types/generalTypes"
 
 interface SectionContainerCardDashboardProps {
@@ -92,17 +92,7 @@ const SectionContainerCardDashboard = ({
                         {addAction && (
                             <AppBtn
                                 customType="primary"
-                                startIcon={
-                                    <AddIcon
-                                        sx={{
-                                            marginInlineEnd: {
-                                                lg: "10px",
-                                                md: "8px",
-                                                xs: "6px",
-                                            },
-                                        }}
-                                    />
-                                }
+                                startIcon={withBtnIconSx(<AddIcon />)}
                                 onClick={addAction.onClick}
                                 sx={{
                                     ...BtnLayout.btnMainStyle,
@@ -117,7 +107,7 @@ const SectionContainerCardDashboard = ({
                             <AppBtn
                                 customType="outline"
                                 onClick={subAction.onClick}
-                                {...(subAction.icon && { startIcon: subAction.icon })}
+                                startIcon={withBtnIconSx(subAction.icon)}
                                                            sx={{
                                     ...BtnLayout.btnMainStyle,
                                     width: { xs: "100%", sm: "auto" },
@@ -132,7 +122,7 @@ const SectionContainerCardDashboard = ({
                                 <AppBtn
                                     key={`${btn.label}-${index}`}
                                     customType={btn.customType ? btn.customType : "outline"}
-                                    startIcon={btn.icon && btn.icon}
+                                    startIcon={withBtnIconSx(btn.icon)}
                                     onClick={btn.onClick}
                                     sx={{
                                         ...BtnLayout.btnMainStyle,

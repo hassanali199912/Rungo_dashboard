@@ -1,29 +1,33 @@
 import { useState, type MouseEvent } from "react";
 import { Box, Button, IconButton, Menu, MenuItem, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
-import LockOutlined from "@mui/icons-material/LockOutlined";
 import MoreHoriz from "@mui/icons-material/MoreHoriz";
-import NorthEast from "@mui/icons-material/NorthEast";
-import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
+import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import { useTranslation } from "react-i18next";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import type { FilterViewMode } from "../contentFilter.types";
-import type { ShortItem, ShortStatus } from "./short.types";
+import type { CourseItem, CoursePricing, CourseStatus } from "./course.types";
 
-type ShortCardProps = {
-    item: ShortItem;
+type CourseCardProps = {
+    item: CourseItem;
     view?: FilterViewMode;
 };
 
-const statusBadgeKey: Record<ShortStatus, string> = {
-    preview: "dashboard.shorts.badge_preview",
-    review: "dashboard.shorts.badge_review",
-    draft: "dashboard.shorts.badge_draft",
-    monetized: "dashboard.shorts.badge_monetized",
+const statusBadgeKey: Record<CourseStatus, string> = {
+    published: "dashboard.courses.badge_published",
+    draft: "dashboard.courses.badge_draft",
+    review: "dashboard.courses.badge_review",
 };
 
-function ShortPreview({ item }: { item: ShortItem }) {
+const pricingBadgeKey: Record<CoursePricing, string> = {
+    free: "dashboard.courses.badge_free",
+    coins: "dashboard.courses.badge_coins",
+    premium: "dashboard.courses.badge_premium",
+};
+
+function CoursePreview({ item }: { item: CourseItem }) {
     const { t } = useTranslation();
 
     return (
@@ -32,8 +36,8 @@ function ShortPreview({ item }: { item: ShortItem }) {
                 position: "relative",
                 overflow: "hidden",
                 bgcolor: "secondary.main",
-                aspectRatio: "4 / 3",
-                minHeight: 180,
+                aspectRatio: "16 / 10",
+                minHeight: 168,
             }}
         >
             {item.thumbnail ? (
@@ -44,29 +48,26 @@ function ShortPreview({ item }: { item: ShortItem }) {
                     sx={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.88 }}
                 />
             ) : (
-                <Box sx={{ height: "100%", p: 1.75, display: "flex", flexDirection: "column", gap: 1.25 }}>
-                    <Box
-                        sx={{
-                            height: 10,
-                            width: "46%",
-                            borderRadius: 999,
-                            bgcolor: "neutral.light",
-                        }}
-                    />
-                    <Box
-                        sx={{
-                            flex: 1,
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: 1,
-                        }}
-                    >
-                        {Array.from({ length: 6 }).map((_, index) => (
+                <Box sx={{ height: "100%", p: 1.75, display: "flex", flexDirection: "column", gap: 1 }}>
+                    {Array.from({ length: 4 }).map((_, index) => (
+                        <Box
+                            key={index}
+                            sx={{
+                                height: 18,
+                                width: `${92 - index * 10}%`,
+                                borderRadius: 999,
+                                bgcolor: index % 2 === 0 ? "neutral.main" : "neutral.light",
+                            }}
+                        />
+                    ))}
+                    <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.75, mt: 0.5 }}>
+                        {Array.from({ length: 3 }).map((_, index) => (
                             <Box
                                 key={index}
                                 sx={{
                                     borderRadius: 1.25,
-                                    bgcolor: index % 2 === 0 ? "neutral.main" : "neutral.light",
+                                    bgcolor: index === 1 ? "primary.main" : "neutral.light",
+                                    opacity: index === 1 ? 0.85 : 0.55,
                                 }}
                             />
                         ))}
@@ -80,7 +81,7 @@ function ShortPreview({ item }: { item: ShortItem }) {
                     inset: 0,
                     pointerEvents: "none",
                     background: (theme) =>
-                        `linear-gradient(180deg, transparent 45%, ${alpha(theme.palette.secondary.main, 0.62)} 100%)`,
+                        `linear-gradient(180deg, transparent 42%, ${alpha(theme.palette.secondary.main, 0.62)} 100%)`,
                 }}
             />
 
@@ -97,9 +98,6 @@ function ShortPreview({ item }: { item: ShortItem }) {
             >
                 <Box
                     sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 0.75,
                         px: 1.25,
                         py: 0.5,
                         borderRadius: 999,
@@ -107,13 +105,48 @@ function ShortPreview({ item }: { item: ShortItem }) {
                         color: "common.white",
                     }}
                 >
-                    <LockOutlined sx={{ fontSize: 14 }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{t(statusBadgeKey[item.status])}</Typography>
                 </Box>
                 <Box
                     sx={{
                         px: 1.25,
                         py: 0.5,
+                        borderRadius: 999,
+                        bgcolor: item.pricing === "premium" ? "primary.main" : (theme) => alpha(theme.palette.common.white, 0.92),
+                        color: item.pricing === "premium" ? "primary.contrastText" : "text.primary",
+                    }}
+                >
+                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{t(pricingBadgeKey[item.pricing])}</Typography>
+                </Box>
+            </Box>
+
+            <Box
+                sx={{
+                    position: "absolute",
+                    bottom: 12,
+                    insetInline: 12,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 1,
+                }}
+            >
+                <Box
+                    sx={{
+                        px: 1.25,
+                        py: 0.55,
+                        borderRadius: 999,
+                        bgcolor: "common.white",
+                        color: "text.primary",
+                    }}
+                >
+                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+                        {t("dashboard.courses.lessons_count", { count: item.lessons })}
+                    </Typography>
+                </Box>
+                <Box
+                    sx={{
+                        px: 1.25,
+                        py: 0.55,
                         borderRadius: 999,
                         bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.72),
                         color: "common.white",
@@ -122,43 +155,11 @@ function ShortPreview({ item }: { item: ShortItem }) {
                     <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{item.duration}</Typography>
                 </Box>
             </Box>
-
-            {item.tags.length > 0 && (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        bottom: 12,
-                        insetInline: 12,
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 1,
-                    }}
-                >
-                    {item.tags.map((tag) => (
-                        <Box
-                            key={tag.label}
-                            sx={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                px: 1.25,
-                                py: 0.55,
-                                borderRadius: 999,
-                                bgcolor: tag.tone === "light" ? "common.white" : "secondary.main",
-                                color: tag.tone === "light" ? "text.primary" : "secondary.contrastText",
-                            }}
-                        >
-                            {tag.tone === "light" && <NorthEast sx={{ fontSize: 14 }} />}
-                            <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{tag.label}</Typography>
-                        </Box>
-                    ))}
-                </Box>
-            )}
         </Box>
     );
 }
 
-function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
+function CourseMeta({ item, compact }: { item: CourseItem; compact?: boolean }) {
     const { t } = useTranslation();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -166,9 +167,9 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
     const closeMenu = () => setMenuAnchor(null);
 
     const stats = [
-        { key: "plays", label: t("dashboard.shorts.stat_plays"), value: item.plays },
-        { key: "enrollments", label: t("dashboard.shorts.stat_enrollments"), value: item.enrollments },
-        { key: "retention", label: t("dashboard.shorts.stat_retention"), value: item.retention },
+        { key: "students", label: t("dashboard.courses.stat_students"), value: item.students },
+        { key: "lessons", label: t("dashboard.courses.stat_lessons"), value: String(item.lessons) },
+        { key: "completion", label: t("dashboard.courses.stat_completion"), value: item.completion },
     ];
 
     return (
@@ -189,8 +190,8 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                     <MoreHoriz fontSize="small" />
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.shorts.action_edit")}</MenuItem>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.shorts.action_stats")}</MenuItem>
+                    <MenuItem onClick={closeMenu}>{t("dashboard.courses.action_edit")}</MenuItem>
+                    <MenuItem onClick={closeMenu}>{t("dashboard.courses.action_curriculum")}</MenuItem>
                 </Menu>
             </Box>
 
@@ -232,6 +233,13 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                 ))}
             </Box>
 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.25, color: "text.secondary" }}>
+                <PlayArrowOutlined sx={{ fontSize: 16 }} />
+                <Typography sx={{ fontSize: 12, fontWeight: 600 }}>
+                    {t("dashboard.courses.linked_shorts_count", { count: item.shorts })}
+                </Typography>
+            </Box>
+
             <Box sx={{ display: "flex", gap: 1, mt: 1.75 }}>
                 <Button
                     startIcon={<EditOutlined sx={btnIconStartSx} />}
@@ -248,10 +256,10 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                         },
                     ]}
                 >
-                    {t("dashboard.shorts.action_edit")}
+                    {t("dashboard.courses.action_edit")}
                 </Button>
                 <Button
-                    startIcon={<ShowChartOutlined sx={btnIconStartSx} />}
+                    startIcon={<AccountTreeOutlined sx={btnIconStartSx} />}
                     sx={[
                         btnIconSlotReset,
                         {
@@ -265,14 +273,14 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                         },
                     ]}
                 >
-                    {t("dashboard.shorts.action_stats")}
+                    {t("dashboard.courses.action_curriculum")}
                 </Button>
             </Box>
         </Box>
     );
 }
 
-export default function ShortCard({ item, view = "grid" }: ShortCardProps) {
+export default function CourseCard({ item, view = "grid" }: CourseCardProps) {
     const isList = view === "list";
 
     return (
@@ -288,9 +296,9 @@ export default function ShortCard({ item, view = "grid" }: ShortCardProps) {
             }}
         >
             <Box sx={{ flex: isList ? { sm: "0 0 280px" } : undefined, minWidth: 0 }}>
-                <ShortPreview item={item} />
+                <CoursePreview item={item} />
             </Box>
-            <ShortMeta item={item} compact={isList} />
+            <CourseMeta item={item} compact={isList} />
         </Box>
     );
 }

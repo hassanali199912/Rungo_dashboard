@@ -2,6 +2,7 @@
 import { styled } from '@mui/material';
 import Button, { type ButtonProps } from '@mui/material/Button';
 import type { CustomVariant } from '../../shared/types/generalTypes';
+import { btnIconSlotReset } from '@/styles/btnStyle';
 import { Link as RouterLink } from "react-router-dom"
 
 interface AppButtonProps extends ButtonProps {
@@ -16,6 +17,7 @@ const StyledBtn = styled(Button, {
     paddingBlock: "0.3rem",
     paddingInline: "1.5rem",
     transition: 'all 0.2s ease',
+    ...btnIconSlotReset,
     ...(customType === 'primary' && {
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.primary.contrastText,

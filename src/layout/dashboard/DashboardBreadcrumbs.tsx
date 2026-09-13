@@ -5,9 +5,17 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 
 const DashboardBreadcrumbs = () => {
     const { pathname } = useLocation();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const breadcrumbs = useMemo(() => {
+        const resolveLabel = (segment: string, parent?: string) => {
+            const nestedKey = parent ? `dashboard.crumb.${parent}_${segment}` : "";
+            if (nestedKey && i18n.exists(nestedKey)) return t(nestedKey);
+            if (i18n.exists(`dashboard.crumb.${segment}`)) return t(`dashboard.crumb.${segment}`);
+            if (i18n.exists(`dashboard.nav.${segment}`)) return t(`dashboard.nav.${segment}`);
+            return segment;
+        };
+
         if (pathname.startsWith("/dashboard")) {
             const rest = pathname.replace(/^\/dashboard\/?/, "");
             const crumbs = [
@@ -16,12 +24,11 @@ const DashboardBreadcrumbs = () => {
             ];
             if (rest) {
                 let acc = "/dashboard";
-                rest.split("/").filter(Boolean).forEach((segment) => {
+                const segments = rest.split("/").filter(Boolean);
+                segments.forEach((segment, index) => {
                     acc += `/${segment}`;
                     crumbs.push({
-                        label: t(`dashboard.crumb.${segment}`, {
-                            defaultValue: t(`dashboard.nav.${segment}`, { defaultValue: segment }),
-                        }),
+                        label: resolveLabel(segment, segments[index - 1]),
                         path: acc,
                     });
                 });
@@ -33,7 +40,7 @@ const DashboardBreadcrumbs = () => {
             { label: t("dashboard.crumb_instructor"), path: "/dashboard" },
             { label: t("dashboard.crumb_studio"), path: "/dashboard" },
         ];
-    }, [pathname, t]);
+    }, [pathname, t, i18n]);
 
     return (
         <Breadcrumbs
