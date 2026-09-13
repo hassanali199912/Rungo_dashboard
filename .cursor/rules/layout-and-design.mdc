@@ -1,0 +1,23 @@
+---
+description: Layout and visual design conventions for Kinetic Horizon
+globs: src/layout/**/*.{ts,tsx},src/features/**/*.{ts,tsx},src/components/**/*.{ts,tsx},src/theme.ts
+alwaysApply: true
+---
+
+# Layout and design
+
+- Use `createAppTheme` tokens only: `primary` (`#FF5722`), `secondary` (Deep Carbon), `tertiary` (cyan), `neutral`, `surface`, `white`, `text.*`, `background.*`. Do not hardcode brand hex except inside `src/theme.ts`.
+- Keep light/dark readable. Landing chrome is light; cards use `surface.main`; CTAs may use a primary gradient.
+- Public marketing pages: sticky header + footer in `src/layout/public`. Page body is section files under `src/features/public/<page>/`, composed in the page file.
+- Every user-facing string goes through `t("...")` with the same key in `src/language/locales/en/index.json` and `ar/index.json`. Respect `i18n.dir()` for alignment.
+- Prefer MUI + existing kit (`AppBtn`, `MainLogoComponent`, `AppFormField`). Create a new local component only when no kit piece matches the shape.
+- Put layout props (`display`, `gap`, `p`) in `sx`, not as MUI system props on the root. Use `slotProps` on MUI v9 inputs, not `inputProps` / `InputProps`.
+- Buttons: primary actions = carbon or orange pills (`borderRadius: 999`). Feature cards ≈ `1rem` radius. Do not copy SahelBooks colors.
+
+```tsx
+// ❌ BAD
+<Box display="flex" sx={{ color: "#FF5722" }}>Sign In</Box>
+
+// ✅ GOOD
+<Box sx={{ display: "flex", color: "primary.main" }}>{t("nav.sign_in")}</Box>
+```
