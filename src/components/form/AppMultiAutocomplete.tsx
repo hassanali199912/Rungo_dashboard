@@ -75,15 +75,19 @@ export default function AppMultiAutocomplete({
                                     value.map((item) => (typeof item === "string" ? item : item.value)),
                                 )
                             }
-                            renderTags={(tagValue, getTagProps) =>
+                            renderValue={(tagValue, getItemProps) =>
                                 tagValue.map((option, index) => {
-                                    const { backgroundColor, color } = getChipStyles(option);
-                                    const { key, ...chipProps } = getTagProps({ index });
+                                    const item =
+                                        typeof option === "string"
+                                            ? { value: option, label: option }
+                                            : option;
+                                    const { backgroundColor, color } = getChipStyles(item);
+                                    const { key, ...chipProps } = getItemProps({ index });
 
                                     return (
                                         <Chip
                                             key={key}
-                                            label={option.label}
+                                            label={item.label}
                                             size="small"
                                             {...chipProps}
                                             sx={{
@@ -96,7 +100,7 @@ export default function AppMultiAutocomplete({
                                                 "& .MuiChip-deleteIcon": {
                                                     color,
                                                     opacity: 0.7,
-                                                    marginInlineEnd:1,
+                                                    marginInlineEnd: 1,
                                                     "&:hover": { opacity: 1 },
                                                 },
                                             }}

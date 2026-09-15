@@ -20,7 +20,7 @@ export default function AppOtpField({
             <Controller
                 name={name}
                 control={control}
-                defaultValue={"" as any}
+                defaultValue=""
                 render={({ field }) => {
                     const value = field.value || "";
 
@@ -59,10 +59,8 @@ export default function AppOtpField({
 
                     return (
                         <Box
-                            display="flex"
-                            gap={2}
-                            justifyContent="space-between"
                             onPaste={handlePaste}
+                            sx={{ display: "flex", gap: 2, justifyContent: "space-between" }}
                         >
                             {Array.from({ length }).map((_, index) => (
                                 <TextField

@@ -2,7 +2,6 @@
 import { styled } from '@mui/material';
 import Button, { type ButtonProps } from '@mui/material/Button';
 import type { CustomVariant } from '../../shared/types/generalTypes';
-import { btnIconSlotReset } from '@/styles/btnStyle';
 import { Link as RouterLink } from "react-router-dom"
 
 interface AppButtonProps extends ButtonProps {
@@ -11,13 +10,28 @@ interface AppButtonProps extends ButtonProps {
     reloadDocument?: boolean;
 }
 
+const iconSlotReset = {
+    "& .MuiButton-startIcon": {
+        marginLeft: 0,
+        marginRight: 0,
+        marginInlineStart: 0,
+        marginInlineEnd: 0,
+    },
+    "& .MuiButton-endIcon": {
+        marginLeft: 0,
+        marginRight: 0,
+        marginInlineStart: 0,
+        marginInlineEnd: 0,
+    },
+} as const;
+
 const StyledBtn = styled(Button, {
     shouldForwardProp: (prop) => prop !== 'customType',
 })<AppButtonProps>(({ theme, customType = 'primary' }) => ({
     paddingBlock: "0.3rem",
     paddingInline: "1.5rem",
     transition: 'all 0.2s ease',
-    ...btnIconSlotReset,
+    ...iconSlotReset,
     ...(customType === 'primary' && {
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.primary.contrastText,
@@ -78,11 +92,9 @@ const StyledBtn = styled(Button, {
 }));
 
 const AppBtn = ({ to, ...props }: AppButtonProps) => {
-
     if (to) {
-        return <StyledBtn component={RouterLink} to={to} {...props} />;
+        return <StyledBtn {...props} {...{ component: RouterLink, to }} />;
     }
-
 
     return <StyledBtn {...props} />
 }

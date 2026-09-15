@@ -55,10 +55,11 @@ export const btnIconEndSx: SxProps<Theme> = {
 
 type IconSxProps = { sx?: SxProps<Theme> };
 
-export function withBtnIconSx(icon: ReactElement<IconSxProps> | undefined, edge: "start" | "end" = "start") {
-    if (!icon || !isValidElement(icon)) return undefined;
+export function withBtnIconSx(icon?: ReactElement, edge: "start" | "end" = "start") {
+    if (!isValidElement<IconSxProps>(icon)) return undefined;
+    const edgeSx = edge === "end" ? btnIconEndSx : btnIconStartSx;
     return cloneElement(icon, {
-        sx: [edge === "end" ? btnIconEndSx : btnIconStartSx, icon.props.sx],
+        sx: [edgeSx, icon.props.sx] as SxProps<Theme>,
     });
 }
 
