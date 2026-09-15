@@ -4,12 +4,17 @@ import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
-import { userNavItems } from "./DashbaordNavConfig";
+import type { UserNavItem } from "./DashboardLayout.types";
 
 const expandedWidth = 248;
 const collapsedWidth = 84;
 
-export default function DashboardMainLayout() {
+type DashboardMainLayoutProps = {
+    navItems: UserNavItem[];
+    homePath?: string;
+};
+
+export default function DashboardMainLayout({ navItems, homePath = "/dashboard" }: DashboardMainLayoutProps) {
     const theme = useTheme();
     const { i18n } = useTranslation();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -45,9 +50,10 @@ export default function DashboardMainLayout() {
                     }}
                 >
                     <DashboardSidebar
-                        navItems={userNavItems}
+                        navItems={navItems}
                         collapsed={collapsed}
                         onToggleCollapsed={toggleSidebar}
+                        homePath={homePath}
                     />
                 </Box>
             )}
@@ -59,10 +65,11 @@ export default function DashboardMainLayout() {
                 slotProps={{ paper: { sx: { width: expandedWidth, bgcolor: "background.paper" } } }}
             >
                 <DashboardSidebar
-                    navItems={userNavItems}
+                    navItems={navItems}
                     collapsed={false}
                     onToggleCollapsed={toggleSidebar}
                     onNavigate={closeMobileSidebar}
+                    homePath={homePath}
                 />
             </Drawer>
 

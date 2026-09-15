@@ -11,7 +11,7 @@ interface AuthContextValue {
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
-    login: (credentials: { email: string; password: string }) => Promise<void>;
+    login: (credentials: { email: string; password: string }) => Promise<Actor>;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
     updateUser: (patch: Partial<Actor>) => void;
@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
         setUser(response.data.data);
         setStatus('authenticated');
+        return response.data.data;
     };
     const logout = async () => {
         generation.current++;

@@ -14,11 +14,12 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import NotificationsNoneOutlined from "@mui/icons-material/NotificationsNoneOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/divTools/LanguageSwitcher";
 import { useAuth } from "@/provider/AuthProvider";
 import { useLogout } from "@/provider/useLogout";
+import { isAdminRole } from "@/shared/auth/roles";
 import DashboardBreadcrumbs from "./DashboardBreadcrumbs";
 
 interface UserHeaderProps {
@@ -27,6 +28,7 @@ interface UserHeaderProps {
 
 export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
     const { t } = useTranslation();
+    const { pathname } = useLocation();
     const { user } = useAuth();
     const [profileAnchor, setProfileAnchor] = useState<HTMLElement | null>(null);
     const { handleLogout, loggingOut } = useLogout();
@@ -34,6 +36,9 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
     const openProfile = (event: MouseEvent<HTMLElement>) => setProfileAnchor(event.currentTarget);
     const closeProfile = () => setProfileAnchor(null);
     const profileName = user?.name || t("dashboard.profile_name");
+    const isAdmin = pathname.startsWith("/admin") || isAdminRole(user?.role);
+    const settingsPath = isAdmin ? "/admin/settings" : "/dashboard/settings";
+    const searchKey = isAdmin ? "admin.search" : "dashboard.search";
 
     return (
         <Box
@@ -66,7 +71,7 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
 
                 <TextField
                     fullWidth
-                    placeholder={t("dashboard.search")}
+                    placeholder={t(searchKey)}
                     sx={{
                         display: { xs: "none", md: "block" },
                         maxWidth: 420,
@@ -117,7 +122,7 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
                 </Box>
             </Box>
             <Menu anchorEl={profileAnchor} open={Boolean(profileAnchor)} onClose={closeProfile}>
-                <MenuItem component={RouterLink} to="/dashboard/settings" onClick={closeProfile} sx={{ fontSize: 14 }}>
+                <MenuItem component={RouterLink} to={settingsPath} onClick={closeProfile} sx={{ fontSize: 14 }}>
                     {t("dashboard.nav.settings")}
                 </MenuItem>
                 <MenuItem disabled={loggingOut} onClick={handleLogout} sx={{ fontSize: 14, color: "error.main" }}>

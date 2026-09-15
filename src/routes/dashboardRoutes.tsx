@@ -2,6 +2,8 @@ import { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 import DashboardMainLayout from "../layout/dashboard/DashboardMainLayout";
 import AppError from "../features/public/pages/error/AppError";
+import RoleGate from "./RoleGate";
+import { userNavItems } from "../layout/dashboard/DashbaordNavConfig";
 
 const Overview = lazy(() => import("../features/dashboard/pages/overview/Overview"));
 const Shorts = lazy(() => import("../features/dashboard/pages/shorts/Shorts"));
@@ -14,7 +16,11 @@ const Subscription = lazy(() => import("../features/dashboard/pages/subscription
 const dashboardRoutes: RouteObject[] = [
     {
         path: "/dashboard",
-        element: <DashboardMainLayout />,
+        element: (
+            <RoleGate allow="instructor">
+                <DashboardMainLayout navItems={userNavItems} homePath="/dashboard" />
+            </RoleGate>
+        ),
         errorElement: <AppError />,
         children: [
             { index: true, element: <Overview /> },

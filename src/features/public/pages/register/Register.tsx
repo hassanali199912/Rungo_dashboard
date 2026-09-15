@@ -15,6 +15,7 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
 import client, { bootstrapCsrf } from "@/config/apis";
 import { useAuth } from "@/provider/AuthProvider";
 import { registerSchema, type RegisterValues } from "@/schema";
+import { homePathForRole } from "@/shared/auth/roles";
 import AuthHeroPanel from "../../components/auth/AuthHeroPanel";
 import LanguageSwitcher from "@/components/divTools/LanguageSwitcher";
 const LOGO_SRC = encodeURI("/mainLogo.png");
@@ -22,7 +23,7 @@ const LOGO_SRC = encodeURI("/mainLogo.png");
 export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, user } = useAuth();
 
     const methods = useForm<RegisterValues>({
         resolver: zodResolver(registerSchema),
@@ -37,7 +38,7 @@ export default function Register() {
     });
 
     if (isAuthenticated) {
-        return <Navigate to="/" replace />;
+        return <Navigate to={homePathForRole(user?.role)} replace />;
     }
 
     const domainOptions = [
@@ -65,7 +66,7 @@ export default function Register() {
             );
             await login({ email: values.email, password: values.password });
             showSuccessToast(t("auth.toasts.register_ok"));
-            navigate("/", { replace: true });
+            navigate("/dashboard", { replace: true });
         } catch (cause) {
             const detail = axios.isAxiosError(cause)
                 ? cause.response?.data?.message

@@ -10,6 +10,7 @@ import AppFormField from "@/components/form/AppFormField";
 import { showErrorToast, showInfoToast, showSuccessToast } from "@/components/ui/appToast";
 import { useAuth } from "@/provider/AuthProvider";
 import { loginSchema, type LoginValues } from "@/schema";
+import { homePathForRole } from "@/shared/auth/roles";
 import LanguageSwitcher from "@/components/divTools/LanguageSwitcher";
 import AuthHeroPanel from "../../components/auth/AuthHeroPanel";
 const LOGO_SRC = encodeURI("/mainLogo.png");
@@ -17,7 +18,7 @@ const LOGO_SRC = encodeURI("/mainLogo.png");
 export default function Login() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { login, isAuthenticated } = useAuth();
+    const { login, isAuthenticated, user } = useAuth();
 
     const methods = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
@@ -29,14 +30,14 @@ export default function Login() {
     });
 
     if (isAuthenticated) {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to={homePathForRole(user?.role)} replace />;
     }
 
     const onSubmit = methods.handleSubmit(async (values) => {
         try {
-            await login({ email: values.email, password: values.password });
+            const actor = await login({ email: values.email, password: values.password });
             showSuccessToast(t("auth.toasts.login_ok"));
-            navigate("/dashboard", { replace: true });
+            navigate(homePathForRole(actor.role), { replace: true });
         } catch (cause) {
             const detail = axios.isAxiosError(cause)
                 ? cause.response?.data?.message

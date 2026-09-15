@@ -24,11 +24,12 @@ interface UserSidebarProps {
     collapsed: boolean;
     onToggleCollapsed: () => void;
     onNavigate?: () => void;
+    homePath?: string;
 }
 
-function isItemActive(pathname: string, path?: string) {
+function isItemActive(pathname: string, path?: string, homePath = "/dashboard") {
     if (!path) return false;
-    if (path === "/dashboard") return pathname === "/dashboard";
+    if (path === homePath) return pathname === homePath;
     return pathname.startsWith(path);
 }
 
@@ -37,6 +38,7 @@ export default function DashboardSidebar({
     collapsed,
     onToggleCollapsed,
     onNavigate,
+    homePath = "/dashboard",
 }: UserSidebarProps) {
     const { t } = useTranslation();
     const { pathname } = useLocation();
@@ -46,12 +48,12 @@ export default function DashboardSidebar({
 
     const activeMap = useMemo(() => {
         return navItems.reduce<Record<string, boolean>>((acc, item) => {
-            const selfActive = isItemActive(pathname, item.path);
+            const selfActive = isItemActive(pathname, item.path, homePath);
             const childActive = !!item.children?.some((child) => pathname.startsWith(child.path));
             acc[item.key] = selfActive || childActive;
             return acc;
         }, {});
-    }, [navItems, pathname]);
+    }, [navItems, pathname, homePath]);
 
     const activeGroupKey = useMemo(() => {
         return navItems.find((item) =>
@@ -109,7 +111,7 @@ export default function DashboardSidebar({
             >
                 <Box
                     component={RouterLink}
-                    to="/dashboard"
+                    to={homePath}
                     sx={{
                         display: "inline-flex",
                         alignItems: "center",

@@ -8,27 +8,38 @@ const DashboardBreadcrumbs = () => {
     const { t, i18n } = useTranslation();
 
     const breadcrumbs = useMemo(() => {
-        const resolveLabel = (segment: string, parent?: string) => {
-            const nestedKey = parent ? `dashboard.crumb.${parent}_${segment}` : "";
+        const resolveLabel = (segment: string, parent?: string, navNs = "dashboard") => {
+            const nestedKey = parent ? `${navNs}.crumb.${parent}_${segment}` : "";
             if (nestedKey && i18n.exists(nestedKey)) return t(nestedKey);
-            if (i18n.exists(`dashboard.crumb.${segment}`)) return t(`dashboard.crumb.${segment}`);
-            if (i18n.exists(`dashboard.nav.${segment}`)) return t(`dashboard.nav.${segment}`);
+            if (i18n.exists(`${navNs}.crumb.${segment}`)) return t(`${navNs}.crumb.${segment}`);
+            if (i18n.exists(`${navNs}.nav.${segment}`)) return t(`${navNs}.nav.${segment}`);
+            if (parent && i18n.exists(`${navNs}.crumb.detail`)) return t(`${navNs}.crumb.detail`);
             return segment;
         };
 
-        if (pathname.startsWith("/dashboard")) {
-            const rest = pathname.replace(/^\/dashboard\/?/, "");
+        const isAdmin = pathname.startsWith("/admin");
+        const base = isAdmin ? "/admin" : "/dashboard";
+        const navNs = isAdmin ? "admin" : "dashboard";
+
+        if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+            const rest = pathname.replace(new RegExp(`^${base}/?`), "");
             const crumbs = [
-                { label: t("dashboard.crumb_instructor"), path: "/dashboard" },
-                { label: t("dashboard.crumb_studio"), path: "/dashboard" },
+                {
+                    label: t(isAdmin ? "admin.crumb_admin" : "dashboard.crumb_instructor"),
+                    path: base,
+                },
+                {
+                    label: t(isAdmin ? "admin.crumb_control" : "dashboard.crumb_studio"),
+                    path: base,
+                },
             ];
             if (rest) {
-                let acc = "/dashboard";
+                let acc = base;
                 const segments = rest.split("/").filter(Boolean);
                 segments.forEach((segment, index) => {
                     acc += `/${segment}`;
                     crumbs.push({
-                        label: resolveLabel(segment, segments[index - 1]),
+                        label: resolveLabel(segment, segments[index - 1], navNs),
                         path: acc,
                     });
                 });

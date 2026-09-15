@@ -17,6 +17,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import useWindowSize from "../../shared/hooks/useWindowSize";
 import { useAuth } from "../../provider/AuthProvider";
 import { useLogout } from "@/provider/useLogout";
+import { homePathForRole } from "@/shared/auth/roles";
 import LanguageSwitcher from "../../components/divTools/LanguageSwitcher";
 
 type NavLinkItem =
@@ -41,7 +42,7 @@ export default function RunGoHeader() {
     const { t, i18n } = useTranslation();
     const location = useLocation();
     const { width } = useWindowSize();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const { handleLogout, loggingOut } = useLogout();
     const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -166,7 +167,7 @@ export default function RunGoHeader() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         {isAuthenticated ? (
                             <>
-                                <AppBtn customType="outline" to="/dashboard">
+                                <AppBtn customType="outline" to={homePathForRole(user?.role)}>
                                     {t("nav.dashboard")}
                                 </AppBtn>
                                 {!isCompact && (
