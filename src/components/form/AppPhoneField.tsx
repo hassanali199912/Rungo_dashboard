@@ -3,11 +3,14 @@ import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { formFieldLabelSx, formOutlinedSingleLineInputSx } from "./formFieldLayout";
-import sudiAreba_img from "@assets/icons/saudi-arabia.svg"
+import egyptFlag from "@assets/icons/egypt.svg";
+import saudiArabiaFlag from "@assets/icons/saudi-arabia.svg";
+import uaeFlag from "@assets/icons/united-arab-emirates.svg";
+
 export const countries = [
-    { code: "SA", dialCode: "+966", label: sudiAreba_img },
-    { code: "EG", dialCode: "+20", label: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Flag_of_Egypt.svg/960px-Flag_of_Egypt.svg.png?_=20250804162936" },
-    { code: "AE", dialCode: "+971", label: sudiAreba_img },
+    { code: "SA", dialCode: "+966", label: saudiArabiaFlag },
+    { code: "EG", dialCode: "+20", label: egyptFlag },
+    { code: "AE", dialCode: "+971", label: uaeFlag },
 ];
 
 interface AppPhoneFieldProps {

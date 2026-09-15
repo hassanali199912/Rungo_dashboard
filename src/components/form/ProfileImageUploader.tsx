@@ -1,5 +1,5 @@
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import { Box, IconButton, Typography } from "@mui/material";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
@@ -93,7 +93,7 @@ export default function ProfileImageUploader({
                                         }}
                                     />
                                 ) : (
-                                    <PersonOutlineIcon
+                                    <PersonOutlinedIcon
                                         sx={{ fontSize: 56, color: "text.disabled" }}
                                     />
                                 )}
