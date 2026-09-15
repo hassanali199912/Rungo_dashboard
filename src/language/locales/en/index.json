@@ -4,10 +4,17 @@
     "browse_files": "Browse Files",
     "replace_file": "Replace",
     "uploaded": "Uploaded",
-    "upload_poster": "Upload 9:16"
+    "upload_poster": "Upload 9:16",
+    "edit": "Edit"
   },
   "brand": {
     "name": "RunGo"
+  },
+  "profile_page": {
+    "personal_information": {
+      "verified": "Verified",
+      "email_verified": "Email verified"
+    }
   },
   "login": {
     "weak": "Weak",
@@ -176,6 +183,7 @@
       "shorts": "Shorts",
       "courses": "Courses",
       "earnings": "Coin Earnings",
+      "subscription": "Subscription",
       "settings": "Settings"
     },
     "crumb_instructor": "Instructor",
@@ -222,6 +230,102 @@
     "tx_3_action": "Purchased Full Course Bundle",
     "tx_3_time": "38m ago",
     "section_placeholder": "This studio section is ready for the next build-out. Use the sidebar to move between shorts, courses, earnings, and settings.",
+    "settings": {
+      "title": "Settings",
+      "description": "Manage your instructor profile, studio appearance, and password.",
+      "profile": {
+        "title": "Profile",
+        "subtitle": "This is how learners see you on shorts and courses.",
+        "avatar": "Profile photo",
+        "save": "Save profile",
+        "saved": "Profile updated."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "subtitle": "Choose a light or dark studio theme.",
+        "light": "Light",
+        "dark": "Dark",
+        "light_hint": "Bright canvas for daytime studio work",
+        "dark_hint": "Low-glare canvas for night sessions"
+      },
+      "password": {
+        "title": "Password",
+        "subtitle": "Update the password you use to sign in.",
+        "current": "Current password",
+        "current_placeholder": "Enter current password",
+        "next": "New password",
+        "next_placeholder": "Create a new password",
+        "confirm": "Confirm new password",
+        "confirm_placeholder": "Re-enter new password",
+        "save": "Update password",
+        "saved": "Password updated."
+      },
+      "errors": {
+        "password_mismatch": "New passwords do not match.",
+        "password_same": "Choose a password different from the current one."
+      }
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "See your current studio plan, renew by card, or switch to another plan.",
+      "current_title": "Current plan",
+      "current_subtitle": "Your active instructor studio subscription.",
+      "status_active": "Active",
+      "renews": "Renews on {{date}}",
+      "renew": "Renew plan",
+      "payment_title": "Pay by card",
+      "payment_subtitle": "Enter card details to continue with {{plan}}.",
+      "card_name": "Name on card",
+      "card_name_placeholder": "Name as printed on the card",
+      "card_number": "Card number",
+      "card_number_placeholder": "ACCT-000015",
+      "expiry": "Expiry",
+      "expiry_placeholder": "MM/YY",
+      "cvv": "CVV",
+      "cvv_placeholder": "123",
+      "pay": "Confirm payment",
+      "cancel": "Cancel",
+      "renewed": "Subscription renewed.",
+      "switched": "Plan updated.",
+      "plans_title": "Pricing plans",
+      "plans_subtitle": "Pick the studio plan that matches how you publish.",
+      "plans": {
+        "free": "Free",
+        "price": "${{amount}} / month",
+        "popular": "Popular",
+        "current": "Current plan",
+        "choose": "Choose plan",
+        "starter": {
+          "name": "Starter",
+          "blurb": "Publish your first shorts and try the studio.",
+          "feature_1": "Up to 5 public shorts",
+          "feature_2": "Basic performance stats",
+          "feature_3": "Community support"
+        },
+        "pro": {
+          "name": "Creator Studio Pro",
+          "blurb": "Unlimited publishing with the 85% creator split.",
+          "feature_1": "Unlimited shorts and course tracks",
+          "feature_2": "85% coin revenue share",
+          "feature_3": "Priority payouts",
+          "feature_4": "Advanced studio analytics"
+        },
+        "elite": {
+          "name": "Studio Elite",
+          "blurb": "For teams that run a full creator network.",
+          "feature_1": "Everything in Creator Studio Pro",
+          "feature_2": "Team seats and roles",
+          "feature_3": "Dedicated success manager",
+          "feature_4": "Early access to new studio tools"
+        }
+      },
+      "errors": {
+        "card_name": "Enter the name on the card.",
+        "card_number": "Enter a valid card number.",
+        "expiry": "Enter a valid expiry (MM/YY).",
+        "cvv": "Enter a valid CVV."
+      }
+    },
     "shorts": {
       "title": "Short Video Library",
       "description": "Manage, monetize, and review real-time performance analytics for short vertical lessons.",

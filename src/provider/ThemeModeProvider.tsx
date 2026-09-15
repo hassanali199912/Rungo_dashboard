@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { PaletteMode } from "@mui/material";
 import useLocalStorage from "../shared/hooks/useLocalStorage";
 
@@ -6,6 +6,7 @@ const THEME_MODE_KEY = "themeMode";
 
 type ThemeModeContextType = {
     mode: PaletteMode;
+    setMode: (next: PaletteMode) => void;
     toggleMode: () => void;
 };
 
@@ -20,15 +21,20 @@ export const ThemeModeProvider = ({ children }: { children: ReactNode }) => {
     const [getItem, setItem] = useLocalStorage();
     const [mode, setMode] = useState<PaletteMode>(() => readStoredMode(getItem));
 
-    const toggleMode = () => {
+    const applyMode = useCallback((next: PaletteMode) => {
+        setMode(next);
+        setItem(THEME_MODE_KEY, next);
+    }, [setItem]);
+
+    const toggleMode = useCallback(() => {
         setMode((prev) => {
             const next: PaletteMode = prev === "light" ? "dark" : "light";
             setItem(THEME_MODE_KEY, next);
             return next;
         });
-    };
+    }, [setItem]);
 
-    const value = useMemo(() => ({ mode, toggleMode }), [mode]);
+    const value = useMemo(() => ({ mode, setMode: applyMode, toggleMode }), [mode, applyMode, toggleMode]);
 
     return (
         <ThemeModeContext.Provider value={value}>

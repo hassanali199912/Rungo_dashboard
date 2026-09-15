@@ -8,7 +8,8 @@ const Shorts = lazy(() => import("../features/dashboard/pages/shorts/Shorts"));
 const AddShort = lazy(() => import("../features/dashboard/pages/shorts/AddShort"));
 const Courses = lazy(() => import("../features/dashboard/pages/courses/Courses"));
 const AddCourse = lazy(() => import("../features/dashboard/pages/courses/AddCourse"));
-const DashboardSection = lazy(() => import("../features/dashboard/pages/section/DashboardSection"));
+const Settings = lazy(() => import("../features/dashboard/pages/settings/Settings"));
+const Subscription = lazy(() => import("../features/dashboard/pages/subscription/Subscription"));
 
 const dashboardRoutes: RouteObject[] = [
     {
@@ -21,8 +22,8 @@ const dashboardRoutes: RouteObject[] = [
             { path: "shorts/new", element: <AddShort /> },
             { path: "courses", element: <Courses /> },
             { path: "courses/new", element: <AddCourse /> },
-            { path: "earnings", element: <DashboardSection /> },
-            { path: "settings", element: <DashboardSection /> },
+            { path: "subscription", element: <Subscription /> },
+            { path: "settings", element: <Settings /> },
         ],
     },
 ];

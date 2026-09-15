@@ -28,10 +28,10 @@ export const userNavItems: UserNavItem[] = [
         icon: MenuBookOutlined,
     },
     {
-        key: "earnings",
-        labelKey: "dashboard.nav.earnings",
-        fallbackLabel: "Coin Earnings",
-        path: "/dashboard/earnings",
+        key: "subscription",
+        labelKey: "dashboard.nav.subscription",
+        fallbackLabel: "Subscription",
+        path: "/dashboard/subscription",
         icon: PaymentsOutlined,
     },
     {

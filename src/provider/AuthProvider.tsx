@@ -14,6 +14,7 @@ interface AuthContextValue {
     login: (credentials: { email: string; password: string }) => Promise<void>;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
+    updateUser: (patch: Partial<Actor>) => void;
 }
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -69,9 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try { await client.post('/api/app/v1/auth/logout', undefined, { _sessionVersion: session }); }
         finally { invalidateSession(session); }
     };
+    const updateUser = useCallback((patch: Partial<Actor>) => {
+        setUser((prev) => (prev ? { ...prev, ...patch } : prev));
+    }, []);
     return <AuthContext.Provider value={{
         user, status, error, isAuthenticated: status === 'authenticated',
-        isLoading: status === 'loading', login, logout, refresh,
+        isLoading: status === 'loading', login, logout, refresh, updateUser,
     }}>{children}</AuthContext.Provider>;
 }
 export function useAuth() {
