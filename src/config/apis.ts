@@ -1,142 +1,191 @@
-import axios, { AxiosError, type AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosHeaders, type AxiosRequestConfig } from 'axios';
 
 declare module 'axios' {
     interface AxiosRequestConfig {
-        businessScoped?: boolean;
-        skipSessionHandling?: boolean;
-        _csrfRetried?: boolean;
-        _sessionVersion?: number;
+        /** When true, a 401 will not clear the stored token or emit `unauthenticated`. */
+        skipAuthHandling?: boolean;
+        /** Internal: this request already recovered from a 401 via refresh. */
+        _authRetried?: boolean;
     }
 }
+
 export interface ApiErrorBody {
     code?: string;
     message?: string;
     errors?: Record<string, string[]>;
 }
-type ApiEvent = 'unauthenticated' | 'actorChanged' | 'contextRequired' | 'businessUnavailable';
+
+type ApiEvent = 'unauthenticated';
+
+const ACCESS_TOKEN_KEY = 'rungo.accessToken';
+const REFRESH_TOKEN_KEY = 'rungo.refreshToken';
+const AUTH_USER_KEY = 'rungo.authUser';
+const PUBLIC_AUTH_PATH = /\/auth\/(?:dashboard\/)?(login|register|refresh)\/?$/i;
+
 const listeners = new Map<ApiEvent, Set<() => void>>();
+
 export function onApiEvent(event: ApiEvent, listener: () => void) {
     const group = listeners.get(event) ?? new Set();
     group.add(listener);
     listeners.set(event, group);
-    return () => { group.delete(listener); };
+    return () => {
+        group.delete(listener);
+    };
 }
-function emit(event: ApiEvent) { listeners.get(event)?.forEach(listener => listener()); }
-let selectedUid: string | null = null;
-let sessionVersion = 0;
-let sessionActorId: string | null = null;
-export function setBusinessContext(uid: string | null) { selectedUid = uid; }
-export function getSessionVersion() { return sessionVersion; }
-function advanceSessionGeneration() {
-    sessionVersion++;
-    selectedUid = null;
+
+function emit(event: ApiEvent) {
+    listeners.get(event)?.forEach((listener) => listener());
 }
-export function replaceSessionActor(actorId: string | number, newLogin = false) {
-    const nextId = String(actorId);
-    if (!newLogin && sessionActorId === nextId) return;
-    const replacingActor = sessionActorId !== null;
-    sessionActorId = nextId;
-    advanceSessionGeneration();
-    // Clear previous actor state synchronously before pending provider callbacks run.
-    // Initial hydration preserves the saved selector for authorized-list validation.
-    if (replacingActor) emit('actorChanged');
+
+function readStorage(key: string): string | null {
+    try {
+        return localStorage.getItem(key);
+    } catch {
+        return null;
+    }
 }
-export function invalidateSession(expectedVersion = sessionVersion) {
-    if (expectedVersion !== sessionVersion) return;
-    sessionActorId = null;
-    advanceSessionGeneration();
+
+function writeStorage(key: string, value: string | null) {
+    try {
+        if (value) localStorage.setItem(key, value);
+        else localStorage.removeItem(key);
+    } catch {
+        // Storage can be unavailable (private mode / blocked). Requests simply go unauthenticated.
+    }
+}
+
+export function getAccessToken(): string | null {
+    return readStorage(ACCESS_TOKEN_KEY);
+}
+
+export function getRefreshToken(): string | null {
+    return readStorage(REFRESH_TOKEN_KEY);
+}
+
+export function getStoredUser<T = unknown>(): T | null {
+    const raw = readStorage(AUTH_USER_KEY);
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw) as T;
+    } catch {
+        return null;
+    }
+}
+
+export function setStoredUser(user: unknown | null) {
+    writeStorage(AUTH_USER_KEY, user == null ? null : JSON.stringify(user));
+}
+
+export function setAuthSession(session: {
+    accessToken: string;
+    refreshToken?: string | null;
+    user?: unknown | null;
+}) {
+    writeStorage(ACCESS_TOKEN_KEY, session.accessToken);
+    writeStorage(REFRESH_TOKEN_KEY, session.refreshToken ?? null);
+    if (session.user !== undefined) setStoredUser(session.user);
+}
+
+export function clearAuth() {
+    writeStorage(ACCESS_TOKEN_KEY, null);
+    writeStorage(REFRESH_TOKEN_KEY, null);
+    writeStorage(AUTH_USER_KEY, null);
     emit('unauthenticated');
 }
-function assertCurrentSession(config: AxiosRequestConfig) {
-    if (config._sessionVersion !== sessionVersion) {
-        throw new axios.CanceledError('Stale session request');
+
+type AuthSessionPayload = {
+    accessToken: string;
+    refreshToken: string;
+    user: unknown;
+};
+
+let refreshRequest: Promise<AuthSessionPayload | null> | null = null;
+
+export async function refreshAccessToken() {
+    if (refreshRequest) return refreshRequest;
+
+    const run = async () => {
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) return null;
+        try {
+            const { data } = await axiosInstance.post<AuthSessionPayload>(
+                '/auth/refresh',
+                { refreshToken },
+                { skipAuthHandling: true },
+            );
+            setAuthSession({
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+                user: data.user,
+            });
+            return data;
+        } catch {
+            return null;
+        }
+    };
+
+    refreshRequest = run().finally(() => {
+        refreshRequest = null;
+    });
+    return refreshRequest;
+}
+
+function requestPath(config: AxiosRequestConfig): string {
+    const raw = config.url ?? '';
+    const withoutQuery = raw.split('?')[0] || '';
+    try {
+        if (/^https?:\/\//i.test(withoutQuery)) return new URL(withoutQuery).pathname;
+        const base = config.baseURL || window.location.origin;
+        return new URL(withoutQuery || '/', base).pathname;
+    } catch {
+        return withoutQuery;
     }
 }
+
 const axiosInstance = axios.create({
-    baseURL: '/',
+    baseURL: import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || undefined,
     timeout: 15000,
-    withCredentials: true,
-    xsrfCookieName: 'XSRF-TOKEN',
-    xsrfHeaderName: 'X-XSRF-TOKEN',
+    withCredentials: false,
     headers: { Accept: 'application/json' },
 });
-// Root-relative URLs only. Resolve with the browser model before classification;
-// retain the caller's outgoing URL, including its query, without rewriting it.
-export function normalizeApiPath(url: string) {
-    const origin = window.location.origin;
-    const resolved = new URL(url, origin);
-    if (resolved.origin !== origin || !url.startsWith('/') || url.startsWith('//') ||
-        url.includes('\\') || /\p{Cc}/u.test(url)) {
-        throw new Error('API requests must use same-origin root-relative URLs without control characters or backslashes.');
+
+axiosInstance.interceptors.request.use((config) => {
+    const headers = AxiosHeaders.from(config.headers);
+    headers.delete('Authorization');
+
+    const path = requestPath(config);
+    const token = getAccessToken();
+    if (token && !PUBLIC_AUTH_PATH.test(path)) {
+        headers.set('Authorization', `Bearer ${token}`);
     }
-    return resolved.pathname.replace(/\/+$/, '') || '/';
-}
-const unscoped = new Set([
-    '/sanctum/csrf-cookie', '/api/app/v1/auth/login', '/api/app/v1/auth/register',
-    '/api/app/v1/auth/me', '/api/app/v1/auth/logout', '/api/app/v1/businesses',
-]);
-axiosInstance.interceptors.request.use(config => {
-    if (config.baseURL !== '/') throw new Error('API baseURL must remain root-relative.');
-    const path = normalizeApiPath(config.url ?? '');
-    config._sessionVersion ??= sessionVersion;
-    assertCurrentSession(config);
-    const scoped = !unscoped.has(path) &&
-        (config.businessScoped || path === '/api/app/v1/businesses/current');
-    if (config._csrfRetried && scoped &&
-        (config.headers.get('X-Business-Uid') || null) !== selectedUid) {
-        throw new axios.CanceledError('Business context changed during CSRF recovery');
-    }
-    config.headers.delete('X-Business-Uid');
-    if (scoped && selectedUid) config.headers.set('X-Business-Uid', selectedUid);
+
+    config.headers = headers;
     return config;
 });
-let csrfRequest: { version: number; promise: Promise<void> } | undefined;
-export function bootstrapCsrf() {
-    if (csrfRequest?.version === sessionVersion) return csrfRequest.promise;
-    const request = {
-        version: sessionVersion,
-        promise: axiosInstance.get('/sanctum/csrf-cookie', {
-            skipSessionHandling: true, _sessionVersion: sessionVersion,
-        }).then(() => undefined).finally(() => {
-            if (csrfRequest === request) csrfRequest = undefined;
-        }),
-    };
-    csrfRequest = request;
-    return request.promise;
-}
-axiosInstance.interceptors.response.use(response => {
-    assertCurrentSession(response.config);
-    return response;
-}, async (error: AxiosError<ApiErrorBody>) => {
-    const config = error.config;
-    if (!config) return Promise.reject(error);
-    assertCurrentSession(config);
-    const status = error.response?.status;
-    const code = error.response?.data?.code;
-    const path = normalizeApiPath(config.url ?? '/');
-    if (status === 419 && code === 'CSRF_TOKEN_MISMATCH' &&
-        !config._csrfRetried && path !== '/sanctum/csrf-cookie') {
-        // Laravel rejects this request before mutation execution. No other mutation retry is permitted.
-        config._csrfRetried = true;
-        const uid = config.headers.get('X-Business-Uid');
-        await bootstrapCsrf();
-        assertCurrentSession(config);
-        if ((config.businessScoped || path === '/api/app/v1/businesses/current') &&
-            (uid || null) !== selectedUid) {
-            throw new axios.CanceledError('Business context changed during CSRF recovery');
+
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError<ApiErrorBody>) => {
+        const config = error.config;
+        const status = error.response?.status;
+        if (status !== 401 || !config || config.skipAuthHandling || config._authRetried) {
+            return Promise.reject(error);
         }
-        config.headers.delete('X-XSRF-TOKEN');
+
+        const path = requestPath(config);
+        if (PUBLIC_AUTH_PATH.test(path)) {
+            return Promise.reject(error);
+        }
+
+        const session = await refreshAccessToken();
+        if (!session) {
+            clearAuth();
+            return Promise.reject(error);
+        }
+
+        config._authRetried = true;
         return axiosInstance.request(config);
-    }
-    if (status === 401 && !config.skipSessionHandling) invalidateSession();
-    if (status === 422 && code === 'BUSINESS_CONTEXT_REQUIRED') emit('contextRequired');
-    const failedBusinessUid = config.headers.get('X-Business-Uid');
-    if (status === 404 && code === 'BUSINESS_NOT_AVAILABLE' &&
-        typeof failedBusinessUid === 'string' && failedBusinessUid.length > 0 &&
-        failedBusinessUid === selectedUid) {
-        selectedUid = null;
-        emit('businessUnavailable');
-    }
-    return Promise.reject(error);
-});
+    },
+);
+
 export default axiosInstance;

@@ -12,7 +12,7 @@ import { Link as RouterLink, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AppFormField from "@/components/form/AppFormField";
 import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
-import client, { bootstrapCsrf } from "@/config/apis";
+import client from "@/config/apis";
 import { useAuth } from "@/provider/AuthProvider";
 import { registerSchema, type RegisterValues } from "@/schema";
 import { homePathForRole } from "@/shared/auth/roles";
@@ -52,7 +52,6 @@ export default function Register() {
 
     const onSubmit = methods.handleSubmit(async (values) => {
         try {
-            await bootstrapCsrf();
             await client.post(
                 "/api/app/v1/auth/register",
                 {
@@ -62,7 +61,7 @@ export default function Register() {
                     expertise: values.expertise,
                     portfolio: values.portfolio || undefined,
                 },
-                { skipSessionHandling: true },
+                { skipAuthHandling: true },
             );
             await login({ email: values.email, password: values.password });
             showSuccessToast(t("auth.toasts.register_ok"));

@@ -14,6 +14,7 @@ import { i18n } from '../language/index';
 import { useEffect, useMemo, type ReactNode } from 'react';
 import useLocalStorage from "../shared/hooks/useLocalStorage";
 import { AuthProvider } from "./AuthProvider";
+import { QueryProvider } from "./QueryProvider";
 
 
 interface AppProvidersProps {
@@ -57,10 +58,12 @@ export default function AppProviders({ children }: AppProvidersProps) {
 
 
     return (
-        <AuthProvider>
+        <QueryProvider>
+            <AuthProvider>
                 <ThemeModeProvider>
                     <ThemedApp>{children}</ThemedApp>
                 </ThemeModeProvider>
-        </AuthProvider>
+            </AuthProvider>
+        </QueryProvider>
     );
 }
