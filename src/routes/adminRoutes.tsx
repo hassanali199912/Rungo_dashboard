@@ -3,7 +3,7 @@ import type { RouteObject } from "react-router-dom";
 import DashboardMainLayout from "../layout/dashboard/DashboardMainLayout";
 import AppError from "../features/public/pages/error/AppError";
 import { adminNavItems } from "../layout/admin/adminNavConfig";
-import RoleGate from "./RoleGate";
+import ProtectedRoute from "./ProtectedRoute";
 
 const AdminOverview = lazy(() => import("../features/admin/pages/overview/AdminOverview"));
 const Instructors = lazy(() => import("../features/admin/pages/instructors/Instructors"));
@@ -21,9 +21,9 @@ const adminRoutes: RouteObject[] = [
     {
         path: "/admin",
         element: (
-            <RoleGate allow="admin">
+            <ProtectedRoute allow="admin">
                 <DashboardMainLayout navItems={adminNavItems} homePath="/admin" />
-            </RoleGate>
+            </ProtectedRoute>
         ),
         errorElement: <AppError />,
         children: [

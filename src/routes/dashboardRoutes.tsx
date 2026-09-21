@@ -2,7 +2,7 @@ import { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
 import DashboardMainLayout from "../layout/dashboard/DashboardMainLayout";
 import AppError from "../features/public/pages/error/AppError";
-import RoleGate from "./RoleGate";
+import ProtectedRoute from "./ProtectedRoute";
 import { userNavItems } from "../layout/dashboard/DashbaordNavConfig";
 
 const Overview = lazy(() => import("../features/dashboard/pages/overview/Overview"));
@@ -17,9 +17,9 @@ const dashboardRoutes: RouteObject[] = [
     {
         path: "/dashboard",
         element: (
-            <RoleGate allow="instructor">
+            <ProtectedRoute allow="instructor">
                 <DashboardMainLayout navItems={userNavItems} homePath="/dashboard" />
-            </RoleGate>
+            </ProtectedRoute>
         ),
         errorElement: <AppError />,
         children: [

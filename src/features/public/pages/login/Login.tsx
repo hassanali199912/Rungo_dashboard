@@ -19,12 +19,13 @@ export default function Login() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { login, isAuthenticated, user } = useAuth();
+  
 
     const methods = useForm<LoginValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
-            email: "",
-            password: "",
+            email: "instructor@rungo.test",
+            password: "Password123!",
             remember: false,
         },
     });
@@ -38,11 +39,15 @@ export default function Login() {
             const actor = await login({ email: values.email, password: values.password });
             showSuccessToast(t("auth.toasts.login_ok"));
             navigate(homePathForRole(actor.role), { replace: true });
+
         } catch (cause) {
+            
             const detail = axios.isAxiosError(cause)
                 ? cause.response?.data?.message
                 : undefined;
             showErrorToast(t("auth.errors.login_failed"), detail);
+        
+        
         }
     });
 
@@ -179,6 +184,6 @@ export default function Login() {
                 <AuthHeroPanel />
             </Box>
         </Box>
-       
+
     );
 }

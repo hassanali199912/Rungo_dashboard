@@ -63,9 +63,9 @@ export default function Register() {
                 },
                 { skipAuthHandling: true },
             );
-            await login({ email: values.email, password: values.password });
+            const actor = await login({ email: values.email, password: values.password });
             showSuccessToast(t("auth.toasts.register_ok"));
-            navigate("/dashboard", { replace: true });
+            navigate(homePathForRole(actor.role), { replace: true });
         } catch (cause) {
             const detail = axios.isAxiosError(cause)
                 ? cause.response?.data?.message

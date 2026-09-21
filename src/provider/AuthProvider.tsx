@@ -3,9 +3,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccessToken, onApiEvent, setStoredUser } from '@/config/apis';
-import { useLogin, type DashboardUser } from '@/features/queryHooks/useLogin';
-import { useLogout } from '@/features/queryHooks/useLogout';
-import { useMe } from '@/features/queryHooks/useMe';
+import { useLogin, type DashboardUser } from '@/features/queryHooks/auth/useLogin';
+import { useLogout } from '@/features/queryHooks/auth/useLogout';
+import { useMe } from '@/features/queryHooks/auth/useMe';
 import { authKeys } from '@/shared/query/authKeys';
 
 export interface Actor {
