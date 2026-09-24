@@ -170,7 +170,7 @@ export function countShortsByStatus(items: ShortItem[]): Record<ShortStatus | "a
             acc[item.status] += 1;
             return acc;
         },
-        { all: 0, monetized: 0, preview: 0, review: 0, draft: 0 },
+        { all: 0, published: 0, monetized: 0, preview: 0, review: 0, draft: 0 },
     );
 }
 

@@ -1,12 +1,31 @@
 import { useState, type MouseEvent } from "react";
-import { Box, Button, IconButton, Menu, MenuItem, Typography } from "@mui/material";
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Menu,
+    MenuItem,
+    Typography,
+} from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import DeleteOutlineOutlined from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlined from "@mui/icons-material/EditOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import NorthEast from "@mui/icons-material/NorthEast";
 import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
+import axios from "axios";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
+import { useDeleteShort } from "@/features/queryHooks/shorts/useDeleteShort";
+import { useToggleShortActive } from "@/features/queryHooks/shorts/useToggleShortActive";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import type { FilterViewMode } from "../contentFilter.types";
 import type { ShortItem, ShortStatus } from "./short.types";
@@ -17,6 +36,7 @@ type ShortCardProps = {
 };
 
 const statusBadgeKey: Record<ShortStatus, string> = {
+    published: "dashboard.shorts.badge_published",
     preview: "dashboard.shorts.badge_preview",
     review: "dashboard.shorts.badge_review",
     draft: "dashboard.shorts.badge_draft",
@@ -110,17 +130,45 @@ function ShortPreview({ item }: { item: ShortItem }) {
                     <LockOutlined sx={{ fontSize: 14 }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{t(statusBadgeKey[item.status])}</Typography>
                 </Box>
-                <Box
-                    sx={{
-                        px: 1.25,
-                        py: 0.5,
-                        borderRadius: 999,
-                        bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.72),
-                        color: "common.white",
-                    }}
-                >
-                    <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{item.duration}</Typography>
-                </Box>
+                {typeof item.isActive === "boolean" ? (
+                    <Box
+                        sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.75,
+                            px: 1.25,
+                            py: 0.5,
+                            borderRadius: 999,
+                            bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.72),
+                            color: "common.white",
+                        }}
+                    >
+                        {item.isActive ? (
+                            <VisibilityOutlined sx={{ fontSize: 14 }} />
+                        ) : (
+                            <VisibilityOffOutlined sx={{ fontSize: 14 }} />
+                        )}
+                        <Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+                            {t(
+                                item.isActive
+                                    ? "dashboard.shorts.visibility_public"
+                                    : "dashboard.shorts.visibility_hidden",
+                            )}
+                        </Typography>
+                    </Box>
+                ) : (
+                    <Box
+                        sx={{
+                            px: 1.25,
+                            py: 0.5,
+                            borderRadius: 999,
+                            bgcolor: (theme) => alpha(theme.palette.secondary.main, 0.72),
+                            color: "common.white",
+                        }}
+                    >
+                        <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{item.duration}</Typography>
+                    </Box>
+                )}
             </Box>
 
             {item.tags.length > 0 && (
@@ -160,16 +208,55 @@ function ShortPreview({ item }: { item: ShortItem }) {
 
 function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const toggleActive = useToggleShortActive();
+    const deleteShort = useDeleteShort();
 
     const openMenu = (event: MouseEvent<HTMLElement>) => setMenuAnchor(event.currentTarget);
     const closeMenu = () => setMenuAnchor(null);
+    const handleEdit = () => navigate(`/dashboard/shorts/${item.id}/edit`);
+    const openDeleteDialog = () => {
+        closeMenu();
+        setDeleteDialogOpen(true);
+    };
+    const handleDelete = async () => {
+        try {
+            await deleteShort.mutateAsync(item.id);
+            setDeleteDialogOpen(false);
+            showSuccessToast(t("dashboard.shorts.deleted"));
+        } catch (cause) {
+            const detail = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
+            showErrorToast(t("dashboard.shorts.delete_failed"), detail);
+        }
+    };
+    const handleToggleActive = async () => {
+        closeMenu();
+        try {
+            await toggleActive.mutateAsync(item.id);
+            showSuccessToast(t("dashboard.shorts.visibility_updated"));
+        } catch (cause) {
+            const detail = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
+            showErrorToast(t("dashboard.shorts.toggle_active_failed"), detail);
+        }
+    };
 
-    const stats = [
-        { key: "plays", label: t("dashboard.shorts.stat_plays"), value: item.plays },
-        { key: "enrollments", label: t("dashboard.shorts.stat_enrollments"), value: item.enrollments },
-        { key: "retention", label: t("dashboard.shorts.stat_retention"), value: item.retention },
-    ];
+    const stats = item.engagement
+        ? [
+              { key: "likes", label: t("dashboard.shorts.stat_likes"), value: item.engagement.likes.toLocaleString() },
+              {
+                  key: "comments",
+                  label: t("dashboard.shorts.stat_comments"),
+                  value: item.engagement.comments.toLocaleString(),
+              },
+              { key: "shares", label: t("dashboard.shorts.stat_shares"), value: item.engagement.shares.toLocaleString() },
+          ]
+        : [
+              { key: "plays", label: t("dashboard.shorts.stat_plays"), value: item.plays },
+              { key: "enrollments", label: t("dashboard.shorts.stat_enrollments"), value: item.enrollments },
+              { key: "retention", label: t("dashboard.shorts.stat_retention"), value: item.retention },
+          ];
 
     return (
         <Box sx={{ p: compact ? 2 : 2.25, display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
@@ -189,8 +276,21 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                     <MoreHoriz fontSize="small" />
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.shorts.action_edit")}</MenuItem>
+                    <MenuItem onClick={handleEdit}>{t("dashboard.shorts.action_edit")}</MenuItem>
                     <MenuItem onClick={closeMenu}>{t("dashboard.shorts.action_stats")}</MenuItem>
+                    {typeof item.isActive === "boolean" && (
+                        <MenuItem onClick={handleToggleActive} disabled={toggleActive.isPending}>
+                            {t(
+                                item.isActive
+                                    ? "dashboard.shorts.action_hide"
+                                    : "dashboard.shorts.action_make_public",
+                            )}
+                        </MenuItem>
+                    )}
+                    <MenuItem onClick={openDeleteDialog} sx={{ color: "error.main", gap: 1 }}>
+                        <DeleteOutlineOutlined fontSize="small" />
+                        {t("dashboard.shorts.action_delete")}
+                    </MenuItem>
                 </Menu>
             </Box>
 
@@ -234,6 +334,7 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
 
             <Box sx={{ display: "flex", gap: 1, mt: 1.75 }}>
                 <Button
+                    onClick={handleEdit}
                     startIcon={<EditOutlined sx={btnIconStartSx} />}
                     sx={[
                         btnIconSlotReset,
@@ -268,6 +369,41 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                     {t("dashboard.shorts.action_stats")}
                 </Button>
             </Box>
+
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={deleteShort.isPending ? undefined : () => setDeleteDialogOpen(false)}
+                fullWidth
+                maxWidth="xs"
+            >
+                <DialogTitle sx={{ fontWeight: 800 }}>{t("dashboard.shorts.delete_title")}</DialogTitle>
+                <DialogContent>
+                    <Typography sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+                        {t("dashboard.shorts.delete_message", { title: item.title })}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+                    <Button
+                        onClick={() => setDeleteDialogOpen(false)}
+                        disabled={deleteShort.isPending}
+                        sx={{ borderRadius: 999, color: "text.primary" }}
+                    >
+                        {t("dashboard.shorts.delete_cancel")}
+                    </Button>
+                    <Button
+                        onClick={handleDelete}
+                        disabled={deleteShort.isPending}
+                        sx={{
+                            borderRadius: 999,
+                            bgcolor: "error.main",
+                            color: "common.white",
+                            "&:hover": { bgcolor: "error.dark" },
+                        }}
+                    >
+                        {t("dashboard.shorts.delete_confirm")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

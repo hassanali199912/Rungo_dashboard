@@ -78,6 +78,8 @@ interface AppFormFieldProps {
     replaceLabel?: string;
     uploadVariant?: "compact" | "dropzone";
     freeSolo?: boolean;
+    existingMediaUrl?: string;
+    existingImageUrl?: string;
 }
 
 export default function AppFormField({
@@ -90,6 +92,8 @@ export default function AppFormField({
     replaceLabel,
     uploadVariant,
     freeSolo,
+    existingMediaUrl,
+    existingImageUrl,
     ...rest
 }: AppFormFieldProps) {
     const renderField = () => {
@@ -158,6 +162,7 @@ export default function AppFormField({
                         multiple={rest.multiple}
                         accept={rest.accept}
                         variant={uploadVariant}
+                        existingMediaUrl={existingMediaUrl}
                     />
                 );
             case "poster":
@@ -168,6 +173,7 @@ export default function AppFormField({
                         hint={hint}
                         disabled={rest.disabled}
                         accept={rest.accept}
+                        existingImageUrl={existingImageUrl}
                     />
                 );
             case "profileImage":

@@ -1,23 +1,78 @@
 import { useMemo, useState } from "react";
 import Add from "@mui/icons-material/Add";
-import PaymentsOutlined from "@mui/icons-material/PaymentsOutlined";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
+import VideoLibraryOutlined from "@mui/icons-material/VideoLibraryOutlined";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useShortStatistics } from "@/features/queryHooks/shorts/useShortStatistics";
+import { useShorts } from "@/features/queryHooks/shorts/useShorts";
 import ContentFilterBar from "../../components/ContentFilterBar";
 import { defaultContentFilter, type ContentFilterState } from "../../components/contentFilter.types";
 import SectionWrapper from "../../components/SectionWrapper";
 import ShortCard from "../../components/shorts/ShortCard";
+import type { ShortItem } from "../../components/shorts/short.types";
 import StatisticCards, { type StatisticCardItem } from "../../components/StatisticCards";
-import { countShortsByStatus, filterShorts, getMockShorts } from "./mockShorts";
+import { countShortsByStatus, filterShorts } from "./mockShorts";
+
+const SHORTS_PARAMS = { page: 1, limit: 20 } as const;
+const SHORTS_MEDIA_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
+function getShortMediaUrl(path: string | null) {
+    if (!path) return undefined;
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return `${SHORTS_MEDIA_BASE_URL}/${path.replace(/^\/+/, "")}`;
+}
+
+function getShortDomain(tagCodes: string[]) {
+    const tags = tagCodes.map((tag) => tag.toLowerCase());
+    if (tags.some((tag) => tag.includes("ui") || tag.includes("ux") || tag.includes("design"))) return "ui-ux";
+    if (tags.some((tag) => tag.includes("code") || tag.includes("program"))) return "code";
+    if (tags.some((tag) => tag.includes("cook") || tag.includes("food"))) return "cooking";
+    if (tags.some((tag) => tag.includes("fit") || tag.includes("sport"))) return "fitness";
+    return "all";
+}
 
 export default function Shorts() {
     const { t } = useTranslation();
     const [filter, setFilter] = useState<ContentFilterState>(defaultContentFilter);
+    const shortsQuery = useShorts(SHORTS_PARAMS);
+    const statisticsQuery = useShortStatistics();
+    const statistics = statisticsQuery.data;
 
-    const shorts = useMemo(() => getMockShorts(t), [t]);
+    const shorts = useMemo<ShortItem[]>(
+        () =>
+            (shortsQuery.data?.items ?? []).map((item) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                category: item.tagCodes[0] ?? t("dashboard.shorts.uncategorized"),
+                domain: getShortDomain(item.tagCodes),
+                status: item.publishedAt ? "published" : "draft",
+                duration: "—",
+                tags: item.tagCodes.map((tag, index) => ({
+                    label: tag,
+                    tone: index % 2 === 0 ? "light" : "dark",
+                })),
+                topics: item.tagCodes,
+                plays: item.likeCount.toLocaleString(),
+                playsCount: item.likeCount,
+                enrollments: item.commentCount.toLocaleString(),
+                enrollmentsCount: item.commentCount,
+                retention: item.shareCount.toLocaleString(),
+                retentionValue: item.shareCount,
+                createdAt: item.createdAt,
+                thumbnail: getShortMediaUrl(item.coverUrl),
+                isActive: item.isActive,
+                engagement: {
+                    likes: item.likeCount,
+                    comments: item.commentCount,
+                    shares: item.shareCount,
+                },
+            })),
+        [shortsQuery.data, t],
+    );
     const scopedShorts = useMemo(() => {
         return filterShorts(shorts, { ...filter, status: "all" });
     }, [shorts, filter]);
@@ -26,37 +81,36 @@ export default function Shorts() {
 
     const stats: StatisticCardItem[] = [
         {
+            key: "total",
+            label: t("dashboard.shorts.stat_total"),
+            value: statistics ? statistics.totalShorts.toLocaleString() : "—",
+            icon: VideoLibraryOutlined,
+        },
+        {
             key: "active",
             label: t("dashboard.shorts.stat_active"),
-            value: "34",
-            icon: PlayArrowOutlined,
-            delta: t("dashboard.shorts.stat_active_delta"),
-            description: t("dashboard.shorts.stat_active_hint"),
-        },
-        {
-            key: "views",
-            label: t("dashboard.shorts.stat_views"),
-            value: "1.42M",
+            value: statistics ? statistics.activeShorts.toLocaleString() : "—",
             icon: VisibilityOutlined,
             iconTone: "tertiary",
-            delta: t("dashboard.shorts.stat_views_delta"),
-            meter: { value: 54, label: t("dashboard.shorts.stat_views_hint") },
         },
         {
-            key: "coins",
-            label: t("dashboard.shorts.stat_coins"),
-            value: "38,450",
-            unit: t("dashboard.shorts.coins"),
-            icon: PaymentsOutlined,
-            description: t("dashboard.shorts.stat_coins_hint"),
+            key: "inactive",
+            label: t("dashboard.shorts.stat_inactive"),
+            value: statistics ? statistics.inactiveShorts.toLocaleString() : "—",
+            icon: VisibilityOffOutlined,
         },
         {
-            key: "conversion",
-            label: t("dashboard.shorts.stat_conversion"),
-            value: "18.6%",
+            key: "engagements",
+            label: t("dashboard.shorts.stat_engagements"),
+            value: statistics ? statistics.totalEngagements.toLocaleString() : "—",
             icon: ShowChartOutlined,
-            delta: t("dashboard.shorts.stat_conversion_delta"),
-            description: t("dashboard.shorts.stat_conversion_hint"),
+            description: statistics
+                ? t("dashboard.shorts.stat_engagement_breakdown", {
+                      likes: statistics.totalLikes.toLocaleString(),
+                      comments: statistics.totalComments.toLocaleString(),
+                      shares: statistics.totalShares.toLocaleString(),
+                  })
+                : undefined,
         },
     ];
 
@@ -70,7 +124,7 @@ export default function Shorts() {
                 to: "/dashboard/shorts/new",
             }}
         >
-            <StatisticCards items={stats} />
+            <StatisticCards items={stats} loading={statisticsQuery.isPending} />
 
             <Box sx={{ marginBlock: 8 }}>
                 <ContentFilterBar
@@ -94,15 +148,26 @@ export default function Shorts() {
                     ]}
                     statusOptions={[
                         { value: "all", label: t("dashboard.shorts.status_all"), count: counts.all },
-                        { value: "monetized", label: t("dashboard.shorts.status_monetized"), count: counts.monetized },
-                        { value: "preview", label: t("dashboard.shorts.status_preview"), count: counts.preview },
-                        { value: "review", label: t("dashboard.shorts.status_review"), count: counts.review },
+                        { value: "published", label: t("dashboard.shorts.status_published"), count: counts.published },
                         { value: "draft", label: t("dashboard.shorts.status_draft"), count: counts.draft },
                     ]}
                 />
             </Box>
 
-            {visibleShorts.length === 0 ? (
+            {shortsQuery.isPending ? (
+                <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+                    <CircularProgress aria-label={t("status.loading")} />
+                </Box>
+            ) : shortsQuery.isError ? (
+                <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <Typography sx={{ color: "error.main", textAlign: "center" }}>
+                        {t("dashboard.shorts.load_error")}
+                    </Typography>
+                    <Button onClick={() => shortsQuery.refetch()} sx={{ borderRadius: 999 }}>
+                        {t("status.retry")}
+                    </Button>
+                </Box>
+            ) : visibleShorts.length === 0 ? (
                 <Typography sx={{ mt: 4, color: "text.secondary", textAlign: "center" }}>
                     {t("dashboard.shorts.empty")}
                 </Typography>

@@ -8,17 +8,19 @@ type ShortFeedPreviewProps = {
     title: string;
     creatorName: string;
     video?: File | null;
+    existingVideoUrl?: string;
 };
 
-export default function ShortFeedPreview({ title, creatorName, video }: ShortFeedPreviewProps) {
+export default function ShortFeedPreview({ title, creatorName, video, existingVideoUrl }: ShortFeedPreviewProps) {
     const { t } = useTranslation();
-    const videoUrl = useMemo(() => (video ? URL.createObjectURL(video) : null), [video]);
+    const localVideoUrl = useMemo(() => (video ? URL.createObjectURL(video) : null), [video]);
+    const previewVideoUrl = localVideoUrl ?? existingVideoUrl;
 
     useEffect(() => {
         return () => {
-            if (videoUrl) URL.revokeObjectURL(videoUrl);
+            if (localVideoUrl) URL.revokeObjectURL(localVideoUrl);
         };
-    }, [videoUrl]);
+    }, [localVideoUrl]);
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -42,10 +44,10 @@ export default function ShortFeedPreview({ title, creatorName, video }: ShortFee
                         bgcolor: "neutral.main",
                     }}
                 >
-                    {videoUrl ? (
+                    {previewVideoUrl ? (
                         <Box
                             component="video"
-                            src={videoUrl}
+                            src={previewVideoUrl}
                             controls
                             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />

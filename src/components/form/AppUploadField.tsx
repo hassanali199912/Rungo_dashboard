@@ -23,6 +23,7 @@ interface AppUploadFieldProps {
     multiple?: boolean;
     accept?: string;
     variant?: UploadVariant;
+    existingMediaUrl?: string;
 }
 
 function formatBytes(bytes: number) {
@@ -46,13 +47,10 @@ function normalizeFiles(value: unknown): File[] {
 }
 
 function useVideoDuration(file: File | null) {
-    const [duration, setDuration] = useState("");
+    const [metadata, setMetadata] = useState<{ file: File; duration: string } | null>(null);
 
     useEffect(() => {
-        if (!file || !file.type.startsWith("video/")) {
-            setDuration("");
-            return;
-        }
+        if (!file || !file.type.startsWith("video/")) return;
 
         const url = URL.createObjectURL(file);
         const video = document.createElement("video");
@@ -61,7 +59,7 @@ function useVideoDuration(file: File | null) {
             const total = Number.isFinite(video.duration) ? video.duration : 0;
             const minutes = Math.floor(total / 60);
             const seconds = Math.round(total % 60).toString().padStart(2, "0");
-            setDuration(`${minutes}:${seconds}`);
+            setMetadata({ file, duration: `${minutes}:${seconds}` });
             URL.revokeObjectURL(url);
         };
         video.src = url;
@@ -69,7 +67,7 @@ function useVideoDuration(file: File | null) {
         return () => URL.revokeObjectURL(url);
     }, [file]);
 
-    return duration;
+    return metadata?.file === file ? metadata.duration : "";
 }
 
 function UploadFileRow({
@@ -163,6 +161,7 @@ export default function AppUploadField({
     multiple = false,
     accept,
     variant = "dropzone",
+    existingMediaUrl,
 }: AppUploadFieldProps) {
     const { control } = useFormContext();
     const { t } = useTranslation();
@@ -271,6 +270,22 @@ export default function AppUploadField({
                                     sx={{ display: "none" }}
                                 />
                             </Box>
+
+                            {existingMediaUrl && files.length === 0 && (
+                                <Box
+                                    component="video"
+                                    src={existingMediaUrl}
+                                    controls
+                                    preload="metadata"
+                                    sx={{
+                                        mt: 2,
+                                        width: "100%",
+                                        maxHeight: 320,
+                                        borderRadius: "1rem",
+                                        bgcolor: "secondary.main",
+                                    }}
+                                />
+                            )}
 
                             {files.length > 0 && (
                                 <Box sx={{ mt: 2, display: "grid", gap: 1.5 }}>

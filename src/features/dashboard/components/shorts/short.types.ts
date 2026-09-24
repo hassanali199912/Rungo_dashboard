@@ -1,4 +1,4 @@
-export type ShortStatus = "monetized" | "preview" | "review" | "draft";
+export type ShortStatus = "published" | "monetized" | "preview" | "review" | "draft";
 
 export type ShortTag = {
     label: string;
@@ -23,4 +23,10 @@ export type ShortItem = {
     retentionValue: number;
     createdAt: string;
     thumbnail?: string;
+    isActive?: boolean;
+    engagement?: {
+        likes: number;
+        comments: number;
+        shares: number;
+    };
 };

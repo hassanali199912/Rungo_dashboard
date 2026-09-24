@@ -11,6 +11,7 @@ interface AppPosterFieldProps {
     hint?: string;
     disabled?: boolean;
     accept?: string;
+    existingImageUrl?: string;
 }
 
 function normalizeFiles(value: unknown): File[] {
@@ -55,6 +56,7 @@ export default function AppPosterField({
     hint,
     disabled = false,
     accept = "image/*",
+    existingImageUrl,
 }: AppPosterFieldProps) {
     const { control } = useFormContext();
     const { t } = useTranslation();
@@ -82,6 +84,20 @@ export default function AppPosterField({
                     return (
                         <>
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.25 }}>
+                                {existingImageUrl && files.length === 0 && (
+                                    <Box
+                                        component="img"
+                                        src={existingImageUrl}
+                                        alt={label}
+                                        sx={{
+                                            width: 92,
+                                            aspectRatio: "9 / 16",
+                                            borderRadius: "1rem",
+                                            objectFit: "cover",
+                                            bgcolor: "surface.main",
+                                        }}
+                                    />
+                                )}
                                 {files.map((file, index) => (
                                     <PosterTile
                                         key={`${file.name}-${file.size}-${index}`}

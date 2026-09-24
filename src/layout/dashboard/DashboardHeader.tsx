@@ -18,7 +18,7 @@ import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/divTools/LanguageSwitcher";
 import { useAuth } from "@/provider/AuthProvider";
-import { useLogout } from "@/provider/useLogout";
+import { useLogoutHook as useLogout } from "@/provider/useLogout";
 import { isAdminRole } from "@/shared/auth/roles";
 import DashboardBreadcrumbs from "./DashboardBreadcrumbs";
 

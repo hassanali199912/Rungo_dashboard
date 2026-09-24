@@ -1,1 +1,1 @@
-export { useLogout } from '@/shared/hooks/useLogout';
+export { useLogoutHook } from '@/shared/hooks/useLogout';

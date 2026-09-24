@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import useWindowSize from "../../shared/hooks/useWindowSize";
 import { useAuth } from "../../provider/AuthProvider";
-import { useLogout } from "@/provider/useLogout";
+import { useLogoutHook as useLogout } from "@/provider/useLogout";
 import { homePathForRole } from "@/shared/auth/roles";
 import LanguageSwitcher from "../../components/divTools/LanguageSwitcher";
 

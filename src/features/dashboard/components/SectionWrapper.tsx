@@ -12,6 +12,7 @@ export type SectionAction = {
     to?: string;
     type?: "button" | "submit";
     variant?: "primary" | "outline";
+    disabled?: boolean;
 };
 
 type SectionWrapperProps = {
@@ -87,6 +88,7 @@ export default function SectionWrapper({ children, title, description, action, a
                                         type={item.type ?? "button"}
                                         to={item.to}
                                         onClick={item.onClick}
+                                        disabled={item.disabled}
                                         startIcon={ActionIcon ? <ActionIcon sx={btnIconStartSx} /> : undefined}
                                         sx={{
                                             borderRadius: 999,

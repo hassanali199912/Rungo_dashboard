@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { ElementType } from "react";
 
@@ -19,6 +19,7 @@ export type StatisticCardItem = {
 
 type StatisticCardsProps = {
     items: StatisticCardItem[];
+    loading?: boolean;
 };
 
 function StatisticCard({ item }: { item: StatisticCardItem }) {
@@ -117,7 +118,7 @@ function StatisticCard({ item }: { item: StatisticCardItem }) {
     );
 }
 
-export default function StatisticCards({ items }: StatisticCardsProps) {
+export default function StatisticCards({ items, loading = false }: StatisticCardsProps) {
     return (
         <Box
             sx={{
@@ -126,9 +127,26 @@ export default function StatisticCards({ items }: StatisticCardsProps) {
                 gap: 2,
             }}
         >
-            {items.map((item) => (
-                <StatisticCard key={item.key} item={item} />
-            ))}
+            {loading
+                ? Array.from({ length: 4 }).map((_, index) => (
+                      <Box
+                          key={index}
+                          sx={{
+                              bgcolor: "surface.main",
+                              borderRadius: "1rem",
+                              p: 2.25,
+                              minHeight: 148,
+                          }}
+                      >
+                          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+                              <Skeleton variant="text" width="55%" height={22} />
+                              <Skeleton variant="circular" width={32} height={32} />
+                          </Box>
+                          <Skeleton variant="text" width="35%" height={44} sx={{ mt: 1 }} />
+                          <Skeleton variant="text" width="75%" height={22} sx={{ mt: 1.5 }} />
+                      </Box>
+                  ))
+                : items.map((item) => <StatisticCard key={item.key} item={item} />)}
         </Box>
     );
 }

@@ -1,9 +1,9 @@
+import { useLogout  } from "@/features/queryHooks/auth/useLogout";
 import { useNavigate } from "react-router-dom";
-import { useLogout as useLogoutMutation } from "@/features/queryHooks/useLogout";
 
-export function useLogout() {
+export function useLogoutHook() {
     const navigate = useNavigate();
-    const { isPending, mutate } = useLogoutMutation();
+    const { isPending, mutate } = useLogout();
 
     const handleLogout = () => {
         if (isPending) return;
