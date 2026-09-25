@@ -66,10 +66,11 @@ const bodyCellSx = {
     verticalAlign: "middle",
 } as const;
 
-export function AdminTablePersonCell({ name, subtitle }: { name: string; subtitle?: string }) {
+export function AdminTablePersonCell({ name, subtitle, src }: { name: string; subtitle?: string; src?: string | null }) {
     return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
             <Avatar
+                src={src || undefined}
                 sx={{
                     width: 40,
                     height: 40,

@@ -102,7 +102,13 @@ export type PlatformSettings = {
 export type CatalogPlan = {
     id: StudioPlanId;
     name: string;
+    description: string;
     price: number;
+    currency: string;
+    durationDays: number;
+    maxCourses: number;
+    maxVideos: number;
+    isActive: boolean;
     popular: boolean;
     features: string[];
     active: boolean;
