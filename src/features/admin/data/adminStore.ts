@@ -1,13 +1,13 @@
 import type { StudioPlanId } from "@/features/dashboard/pages/subscription/studioPlans";
 import type { AccountStatus, CatalogPlan, CoinPack, PlatformSettings } from "./adminTypes";
 
-const STATUS_KEY = "rungo.admin.status";
-const HIDDEN_KEY = "rungo.admin.hidden";
-const PLANS_KEY = "rungo.admin.instructorPlans";
-const REFUNDS_KEY = "rungo.admin.refunds";
-const PACKS_KEY = "rungo.admin.coinPacks";
-const PLATFORM_KEY = "rungo.admin.platform";
-const CATALOG_KEY = "rungo.admin.planCatalog";
+const STATUS_KEY = "runro.admin.status";
+const HIDDEN_KEY = "runro.admin.hidden";
+const PLANS_KEY = "runro.admin.instructorPlans";
+const REFUNDS_KEY = "runro.admin.refunds";
+const PACKS_KEY = "runro.admin.coinPacks";
+const PLATFORM_KEY = "runro.admin.platform";
+const CATALOG_KEY = "runro.admin.planCatalog";
 
 type StatusMap = Record<string, AccountStatus>;
 
@@ -76,7 +76,7 @@ export function saveCoinPacks(packs: CoinPack[]) {
 
 export function getPlatformSettings(): PlatformSettings {
     return readJson(PLATFORM_KEY, {
-        supportEmail: "support@rungo.app",
+        supportEmail: "support@runro.app",
         creatorSplit: 85,
         usdPerCoin: 0.05,
         maintenance: false,

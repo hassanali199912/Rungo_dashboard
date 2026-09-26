@@ -1,16 +1,24 @@
 import { z } from "zod";
 
+const optionalUrl = z
+    .string()
+    .trim()
+    .refine((value) => value === "" || /^https?:\/\/.+/i.test(value), {
+        message: "auth.errors.portfolio_invalid",
+    });
+
 export const profileSettingsSchema = z.object({
     avatar: z.custom<File>((value) => value instanceof File).optional(),
     name: z.string().trim().min(2, "auth.errors.name_required"),
     email: z.string().trim().min(1, "auth.errors.email_required").email("auth.errors.email_invalid"),
     expertise: z.string().min(1, "auth.errors.expertise_required"),
-    portfolio: z
-        .string()
-        .trim()
-        .refine((value) => value === "" || /^https?:\/\/.+/i.test(value), {
-            message: "auth.errors.portfolio_invalid",
-        }),
+    portfolio: optionalUrl,
+    linkedin: optionalUrl,
+    github: optionalUrl,
+    facebook: optionalUrl,
+    youtube: optionalUrl,
+    x: optionalUrl,
+    instagram: optionalUrl,
 });
 
 export const passwordSettingsSchema = z

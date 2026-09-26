@@ -8,7 +8,7 @@
     "edit": "تعديل"
   },
   "brand": {
-    "name": "RunGo"
+    "name": "RunRo"
   },
   "profile_page": {
     "personal_information": {
@@ -94,7 +94,7 @@
     },
     "toasts": {
       "login_ok": "تم تسجيل الدخول. مرحبًا بعودتك.",
-      "register_ok": "تم إنشاء الحساب. مرحبًا بك في RunGo."
+      "register_ok": "تم إنشاء الحساب. مرحبًا بك في RunRo."
     }
   },
   "nav": {
@@ -200,6 +200,10 @@
     "range_7": "7 أيام",
     "range_30": "آخر 30 يومًا",
     "range_year": "هذا العام",
+    "range_custom": "مخصص",
+    "range_from": "من",
+    "range_to": "إلى",
+    "range_invalid": "يجب أن يكون تاريخ النهاية في يوم البداية أو بعده.",
     "stat_earnings": "إجمالي أرباح العملات",
     "stat_views": "مشاهدات المقاطع",
     "stat_students": "الطلاب المسجّلون",
@@ -237,6 +241,19 @@
         "title": "الملف الشخصي",
         "subtitle": "هكذا يراك المتعلمون في المقاطع والدورات.",
         "avatar": "صورة الملف الشخصي",
+        "social_title": "روابط التواصل",
+        "linkedin": "لينكدإن",
+        "linkedin_placeholder": "https://linkedin.com/in/your-name",
+        "github": "جيت هب",
+        "github_placeholder": "https://github.com/your-name",
+        "facebook": "فيسبوك",
+        "facebook_placeholder": "https://facebook.com/your-name",
+        "youtube": "يوتيوب",
+        "youtube_placeholder": "https://youtube.com/@your-name",
+        "x": "إكس",
+        "x_placeholder": "https://x.com/your-name",
+        "instagram": "إنستغرام",
+        "instagram_placeholder": "https://instagram.com/your-name",
         "save": "حفظ الملف",
         "saved": "تم تحديث الملف الشخصي."
       },
@@ -657,7 +674,7 @@
     },
     "overview": {
       "eyebrow": "تحكم المنصة",
-      "welcome": "استوديو إدارة RunGo",
+      "welcome": "استوديو إدارة RunRo",
       "stat_instructors": "المدربون",
       "stat_students": "الطلاب",
       "stat_shorts": "المقاطع العامة",
@@ -777,13 +794,20 @@
     },
     "shorts": {
       "title": "المقاطع العامة",
-      "description": "مقاطع كل المدربين. أخفِ الظهور العام أو أعده.",
-      "search": "ابحث في المقاطع أو المدربين",
+      "description": "مقاطع كل المدربين.",
+      "search": "ابحث في المقاطع بالعنوان أو الوسم",
       "col_title": "المقطع",
       "col_views": "المشاهدات",
       "col_likes": "الإعجابات",
+      "col_comments": "التعليقات",
+      "col_shares": "المشاركات",
+      "col_tags": "الوسوم",
+      "not_set": "لا يوجد",
+      "empty": "لا توجد مقاطع بعد.",
+      "load_failed": "تعذر تحميل المقاطع.",
       "preview": "معاينة",
-      "preview_hint": "معاينة مقطع تجريبية — مقطع نموذجي لمراجعة الإدارة فقط."
+      "preview_hint": "راجع هذا المقطع.",
+      "preview_failed": "تعذر تحميل هذا المقطع."
     },
     "content": {
       "visible": "ظاهر",
@@ -858,13 +882,28 @@
       "description": "الطلاب الذين اشتروا حزم العملات. اعرض الإيصال أو علّمه كمسترد.",
       "search": "ابحث في الفواتير أو الطلاب",
       "packs_title": "حزم عملات الطلاب",
+      "packs_empty": "لا توجد باقات عملات بعد.",
+      "packs_load_failed": "تعذر تحميل باقات العملات.",
+      "create_package": "إنشاء باقة",
+      "package_created": "تم إنشاء باقة العملات.",
+      "package_create_failed": "تعذر إنشاء باقة العملات.",
       "packs_subtitle": "الحزم المعروضة في تطبيق المتعلم. عدّل أو أضف أو أخفِ حزمة.",
       "add_pack": "إضافة حزمة",
       "add_pack_subtitle": "أنشئ حزمة عملات أخرى لمتجر المتعلم.",
       "edit_pack": "تعديل الحزمة",
       "save_pack": "حفظ الحزمة",
+      "pack_name": "الاسم",
       "pack_coins": "العملات",
-      "pack_price": "السعر (دولار)",
+      "pack_price": "السعر",
+      "pack_currency": "العملة",
+      "pack_active": "الباقة نشطة",
+      "delete_package": "حذف الباقة",
+      "delete_package_confirm": "حذف {{name}}؟",
+      "package_updated": "تم تحديث باقة العملات.",
+      "package_update_failed": "تعذر تحديث باقة العملات.",
+      "package_deleted": "تم حذف باقة العملات.",
+      "package_delete_failed": "تعذر حذف باقة العملات.",
+      "package_edit_required": "أدخل اسمًا، وعدد عملات لا يقل عن 1، وسعرًا، ورمز العملة.",
       "bonus": "عملات إضافية",
       "add": "إضافة حزمة",
       "pack_added": "تمت إضافة حزمة العملات.",

@@ -27,7 +27,7 @@ export type ShortPage = {
 };
 
 const SHORTS_API_URL = `${
-    import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://rungo-backend.vercel.app"
+    import.meta.env.VITE_API_URL?.replace(/\/+$/, "") || "https://runro-backend.vercel.app"
 }/shorts/manage`;
 
 export function shortsApi(params: ShortsListParams) {

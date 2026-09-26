@@ -42,8 +42,8 @@ export default function RunGoLoader({ fullScreen = true }: RunGoLoaderProps) {
                         border: "2px solid",
                         borderColor: "primary.light",
                         borderTopColor: "primary.main",
-                        animation: "rungoSpin 0.9s linear infinite",
-                        "@keyframes rungoSpin": {
+                        animation: "runroSpin 0.9s linear infinite",
+                        "@keyframes runroSpin": {
                             to: { transform: "rotate(360deg)" },
                         },
                     }}
@@ -56,8 +56,8 @@ export default function RunGoLoader({ fullScreen = true }: RunGoLoaderProps) {
                         width: 56,
                         height: 56,
                         borderRadius: "50%",
-                        animation: "rungoPulse 1.2s ease-in-out infinite",
-                        "@keyframes rungoPulse": {
+                        animation: "runroPulse 1.2s ease-in-out infinite",
+                        "@keyframes runroPulse": {
                             "0%, 100%": { transform: "scale(1)" },
                             "50%": { transform: "scale(1.08)" },
                         },

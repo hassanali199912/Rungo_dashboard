@@ -1,72 +1,67 @@
-import { Box, Tab, Tabs, Typography } from "@mui/material";
+import { Box, CircularProgress, Tab, Tabs, Typography } from "@mui/material";
+import axios from "axios";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import AppFormField from "@/components/form/AppFormField";
 import FormWrapper from "@/components/form/FormWrapper";
 import AppBtn from "@/components/ui/AppBtn";
-import { showSuccessToast } from "@/components/ui/appToast";
+import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
 import ContentFilterBar from "@/features/dashboard/components/ContentFilterBar";
 import { defaultContentFilter, type ContentFilterState } from "@/features/dashboard/components/contentFilter.types";
 import SectionWrapper from "@/features/dashboard/components/SectionWrapper";
-import StudioCard from "@/features/dashboard/components/StudioCard";
+import { useAdminCoinPackages } from "@/features/queryHooks/coinPackages/useAdminCoinPackages";
+import { useCreateCoinPackage } from "@/features/queryHooks/coinPackages/useCreateCoinPackage";
+import { useDeleteCoinPackage } from "@/features/queryHooks/coinPackages/useDeleteCoinPackage";
+import { useUpdateCoinPackage } from "@/features/queryHooks/coinPackages/useUpdateCoinPackage";
+import type { CoinPackage, CoinPackageInput } from "@/features/queryHooks/coinPackages/types";
 import AdminViewDialog, { DetailRow } from "../../components/AdminViewDialog";
 import StatusBadge from "../../components/StatusBadge";
-import { markInvoiceRefunded, saveCoinPacks } from "../../data/adminStore";
-import type { CoinInvoice, CoinPack } from "../../data/adminTypes";
-import { getMockCoinPacks, getMockInvoices } from "../../data/mockInvoices";
+import { markInvoiceRefunded } from "../../data/adminStore";
+import type { CoinInvoice } from "../../data/adminTypes";
+import { getMockInvoices } from "../../data/mockInvoices";
 
-type PackFormValues = {
-    coins: number | string;
-    price: number | string;
-    bonus: number | string;
+const TEMP_COIN_PACKAGE: CoinPackageInput = {
+    name: "New package",
+    coins: 100,
+    price: 0,
+    currency: "EGP",
+    isActive: true,
 };
 
+function apiErrorDetail(cause: unknown) {
+    if (!axios.isAxiosError(cause)) return undefined;
+    const message = cause.response?.data?.message;
+    if (Array.isArray(message)) return message.filter((item) => typeof item === "string").join(", ");
+    return typeof message === "string" ? message : undefined;
+}
+
 type InvoiceTab = "packs" | "purchases";
+
+type PackFormValues = {
+    name: string;
+    coins: number | string;
+    price: number | string;
+    currency: string;
+    isActive: boolean;
+};
 
 export default function AdminInvoices() {
     const { t } = useTranslation();
     const [tab, setTab] = useState<InvoiceTab>("packs");
     const [filter, setFilter] = useState<ContentFilterState>(defaultContentFilter);
     const [tick, setTick] = useState(0);
-    const [packs, setPacks] = useState(() => getMockCoinPacks());
+    const packagesQuery = useAdminCoinPackages();
+    const createPackage = useCreateCoinPackage();
+    const updatePackage = useUpdateCoinPackage();
+    const deletePackage = useDeleteCoinPackage();
     const [viewing, setViewing] = useState<CoinInvoice | null>(null);
-    const [editingPack, setEditingPack] = useState<CoinPack | null>(null);
-    const invoices = useMemo(() => getMockInvoices(), [tick]);
+    const [editingPack, setEditingPack] = useState<CoinPackage | null>(null);
     const editMethods = useForm<PackFormValues>({
-        defaultValues: { coins: 0, price: 0, bonus: 0 },
+        defaultValues: { name: "", coins: 100, price: 0, currency: "EGP", isActive: true },
     });
-    const addMethods = useForm<PackFormValues>({
-        defaultValues: { coins: 100, price: 4.99, bonus: 0 },
-    });
-
-    const persistPacks = (next: CoinPack[]) => {
-        setPacks(next);
-        saveCoinPacks(next);
-    };
-
-    const openEdit = (pack: CoinPack) => {
-        setEditingPack(pack);
-        editMethods.reset({ coins: pack.coins, price: pack.price, bonus: pack.bonus });
-    };
-
-    const saveEdit = (values: PackFormValues) => {
-        if (!editingPack) return;
-        persistPacks(
-            packs.map((pack) =>
-                pack.id === editingPack.id
-                    ? {
-                          ...pack,
-                          coins: Number(values.coins) || 0,
-                          price: Number(values.price) || 0,
-                          bonus: Number(values.bonus) || 0,
-                      }
-                    : pack,
-            ),
-        );
-        setEditingPack(null);
-        showSuccessToast(t("admin.invoices.pack_updated"));
-    };
+    const invoices = useMemo(() => getMockInvoices(), [tick]);
+    const packages = Array.isArray(packagesQuery.data) ? packagesQuery.data : [];
 
     const visible = invoices.filter((row) => {
         const q = filter.query.trim().toLowerCase();
@@ -75,22 +70,62 @@ export default function AdminInvoices() {
         return matchesQuery && matchesStatus;
     });
 
-    const addPack = (values: PackFormValues) => {
-        const next: CoinPack = {
-            id: `pack-${Date.now()}`,
-            coins: Number(values.coins) || 0,
-            price: Number(values.price) || 0,
-            bonus: Number(values.bonus) || 0,
-            active: true,
-        };
-        persistPacks([...packs, next]);
-        addMethods.reset({ coins: 100, price: 4.99, bonus: 0 });
-        showSuccessToast(t("admin.invoices.pack_added"));
+    const createTempPackage = async () => {
+        try {
+            await createPackage.mutateAsync(TEMP_COIN_PACKAGE);
+            showSuccessToast(t("admin.invoices.package_created"));
+        } catch (cause) {
+            showErrorToast(t("admin.invoices.package_create_failed"), apiErrorDetail(cause));
+        }
     };
 
-    const togglePack = (id: string) => {
-        persistPacks(packs.map((pack) => (pack.id === id ? { ...pack, active: !pack.active } : pack)));
-        showSuccessToast(t("admin.invoices.pack_updated"));
+    const openEdit = (pack: CoinPackage) => {
+        setEditingPack(pack);
+        editMethods.reset({
+            name: pack.name,
+            coins: pack.coins,
+            price: pack.price,
+            currency: pack.currency,
+            isActive: pack.isActive,
+        });
+    };
+
+    const saveEdit = async (values: PackFormValues) => {
+        if (!editingPack) return;
+        const name = values.name.trim();
+        const currency = values.currency.trim();
+        const coins = Number(values.coins);
+        const price = Number(values.price);
+        if (!name || !currency || !Number.isFinite(coins) || coins < 1 || !Number.isFinite(price) || price < 0) {
+            showErrorToast(t("admin.invoices.package_edit_required"));
+            return;
+        }
+        try {
+            await updatePackage.mutateAsync({
+                id: editingPack.id,
+                body: {
+                    name,
+                    coins,
+                    price,
+                    currency,
+                    isActive: Boolean(values.isActive),
+                },
+            });
+            setEditingPack(null);
+            showSuccessToast(t("admin.invoices.package_updated"));
+        } catch (cause) {
+            showErrorToast(t("admin.invoices.package_update_failed"), apiErrorDetail(cause));
+        }
+    };
+
+    const removePackage = async (pack: CoinPackage) => {
+        if (!window.confirm(t("admin.invoices.delete_package_confirm", { name: pack.name }))) return;
+        try {
+            await deletePackage.mutateAsync(pack.id);
+            showSuccessToast(t("admin.invoices.package_deleted"));
+        } catch (cause) {
+            showErrorToast(t("admin.invoices.package_delete_failed"), apiErrorDetail(cause));
+        }
     };
 
     const refund = (id: string) => {
@@ -134,69 +169,82 @@ export default function AdminInvoices() {
             </Tabs>
 
             {tab === "packs" ? (
-                <Box>
-                    <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
                         {t("admin.invoices.packs_subtitle")}
                     </Typography>
-                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 1.5, mb: 2 }}>
-                        {packs.map((pack) => (
-                            <Box
-                                key={pack.id}
-                                sx={{
-                                    bgcolor: "surface.main",
-                                    borderRadius: "1rem",
-                                    p: 2,
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    gap: 2,
-                                    alignItems: "center",
-                                }}
-                            >
-                                <Box>
-                                    <Typography sx={{ fontWeight: 800 }}>
-                                        {pack.coins} {t("dashboard.coins")}
-                                    </Typography>
-                                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                                        ${pack.price.toFixed(2)} · +{pack.bonus} {t("admin.invoices.bonus")}
-                                    </Typography>
-                                    <Box sx={{ mt: 1 }}>
-                                        <StatusBadge
-                                            status={pack.active ? "visible" : "hidden"}
-                                            label={pack.active ? t("admin.content.visible") : t("admin.content.hidden_status")}
-                                        />
+                    <AppBtn
+                        customType="primary"
+                        type="button"
+                        disabled={createPackage.isPending}
+                        onClick={createTempPackage}
+                        sx={{ borderRadius: 999, alignSelf: "flex-start" }}
+                    >
+                        {t("admin.invoices.create_package")}
+                    </AppBtn>
+                    {packagesQuery.isPending ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                            <CircularProgress aria-label={t("status.loading")} />
+                        </Box>
+                    ) : packagesQuery.isError || (packagesQuery.isSuccess && !Array.isArray(packagesQuery.data)) ? (
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 4 }}>
+                            <Typography sx={{ color: "error.main", textAlign: "center" }}>
+                                {t("admin.invoices.packs_load_failed")}
+                            </Typography>
+                            <AppBtn customType="primary" type="button" onClick={() => packagesQuery.refetch()} sx={{ borderRadius: 999 }}>
+                                {t("status.retry")}
+                            </AppBtn>
+                        </Box>
+                    ) : packages.length === 0 ? (
+                        <Typography sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+                            {t("admin.invoices.packs_empty")}
+                        </Typography>
+                    ) : (
+                        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" }, gap: 1.5, mb: 2 }}>
+                            {packages.map((pack) => (
+                                <Box
+                                    key={pack.id}
+                                    sx={{
+                                        bgcolor: "surface.main",
+                                        borderRadius: "1rem",
+                                        p: 2,
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        gap: 2,
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <Box>
+                                        <Typography sx={{ fontWeight: 800 }}>{pack.name}</Typography>
+                                        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                                            {pack.coins} {t("dashboard.coins")} · {Number(pack.price).toFixed(2)} {pack.currency}
+                                        </Typography>
+                                        <Box sx={{ mt: 1 }}>
+                                            <StatusBadge
+                                                status={pack.isActive ? "visible" : "hidden"}
+                                                label={pack.isActive ? t("admin.content.visible") : t("admin.content.hidden_status")}
+                                            />
+                                        </Box>
+                                    </Box>
+                                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                        <AppBtn customType="outline" type="button" onClick={() => openEdit(pack)} sx={{ borderRadius: 999 }}>
+                                            {t("form.edit")}
+                                        </AppBtn>
+                                        <AppBtn
+                                            customType="outline"
+                                            type="button"
+                                            disabled={deletePackage.isPending && deletePackage.variables === pack.id}
+                                            onClick={() => removePackage(pack)}
+                                            sx={{ borderRadius: 999 }}
+                                        >
+                                            {t("admin.invoices.delete_package")}
+                                        </AppBtn>
                                     </Box>
                                 </Box>
-                                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                    <AppBtn customType="outline" type="button" onClick={() => openEdit(pack)} sx={{ borderRadius: 999 }}>
-                                        {t("form.edit")}
-                                    </AppBtn>
-                                    <AppBtn customType="outline" type="button" onClick={() => togglePack(pack.id)} sx={{ borderRadius: 999 }}>
-                                        {pack.active ? t("admin.content.hide") : t("admin.content.unhide")}
-                                    </AppBtn>
-                                </Box>
-                            </Box>
-                        ))}
-                    </Box>
+                            ))}
+                        </Box>
+                    )}
 
-                    <StudioCard title={t("admin.invoices.add_pack")} subtitle={t("admin.invoices.add_pack_subtitle")}>
-                        <FormWrapper methods={addMethods} onSubmit={addPack}>
-                            <Box
-                                sx={{
-                                    display: "grid",
-                                    gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr auto" },
-                                    gap: 1.5,
-                                    alignItems: "end",
-                                }}
-                            >
-                                <AppFormField name="coins" type="number" label={t("admin.invoices.pack_coins")} showLable />
-                                <AppFormField name="price" type="number" label={t("admin.invoices.pack_price")} showLable />
-                                <AppFormField name="bonus" type="number" label={t("admin.invoices.bonus")} showLable />
-                                <AppBtn customType="primary" type="submit" sx={{ borderRadius: 999, mb: 0.5 }}>
-                                    {t("admin.invoices.add")}
-                                </AppBtn>
-                            </Box>
-                        </FormWrapper>
-                    </StudioCard>
                 </Box>
             ) : (
                 <Box>
@@ -280,10 +328,17 @@ export default function AdminInvoices() {
             <AdminViewDialog open={Boolean(editingPack)} title={t("admin.invoices.edit_pack")} onClose={() => setEditingPack(null)}>
                 <FormWrapper methods={editMethods} onSubmit={saveEdit}>
                     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <AppFormField name="name" type="text" label={t("admin.invoices.pack_name")} showLable />
                         <AppFormField name="coins" type="number" label={t("admin.invoices.pack_coins")} showLable />
                         <AppFormField name="price" type="number" label={t("admin.invoices.pack_price")} showLable />
-                        <AppFormField name="bonus" type="number" label={t("admin.invoices.bonus")} showLable />
-                        <AppBtn customType="primary" type="submit" sx={{ borderRadius: 999, alignSelf: "flex-start" }}>
+                        <AppFormField name="currency" type="text" label={t("admin.invoices.pack_currency")} showLable />
+                        <AppFormField name="isActive" type="checkbox" label={t("admin.invoices.pack_active")} />
+                        <AppBtn
+                            customType="primary"
+                            type="submit"
+                            disabled={updatePackage.isPending}
+                            sx={{ borderRadius: 999, alignSelf: "flex-start" }}
+                        >
                             {t("admin.invoices.save_pack")}
                         </AppBtn>
                     </Box>

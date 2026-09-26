@@ -3,9 +3,15 @@ export type StoredProfile = {
     email: string;
     expertise: string;
     portfolio: string;
+    linkedin: string;
+    github: string;
+    facebook: string;
+    youtube: string;
+    x: string;
+    instagram: string;
 };
 
-const PROFILE_KEY = "rungo.settings.profile";
+const PROFILE_KEY = "runro.settings.profile";
 
 export function loadProfile(): StoredProfile | null {
     try {

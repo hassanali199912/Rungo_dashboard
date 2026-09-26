@@ -9,17 +9,24 @@ import SectionWrapper from "../../components/SectionWrapper";
 import CompletionMeter from "../../components/overview/CompletionMeter";
 import LiveTransactions from "../../components/overview/LiveTransactions";
 import OverviewHero from "../../components/overview/OverviewHero";
+import { defaultOverviewCustomRange, type OverviewRangeKey } from "../../components/overview/OverviewRangeControl";
 import RevenueChart from "../../components/overview/RevenueChart";
 import Sparkline from "../../components/overview/Sparkline";
 import StatCard from "../../components/overview/StatCard";
 
 export default function Overview() {
     const { t } = useTranslation();
-    const [range, setRange] = useState<"7d" | "30d" | "year">("30d");
+    const [range, setRange] = useState<OverviewRangeKey>("30d");
+    const [customRange, setCustomRange] = useState(defaultOverviewCustomRange);
 
     return (
         <SectionWrapper>
-            <OverviewHero range={range} onRangeChange={setRange} />
+            <OverviewHero
+                range={range}
+                customRange={customRange}
+                onRangeChange={setRange}
+                onCustomRangeChange={setCustomRange}
+            />
 
             <Box
                 sx={{

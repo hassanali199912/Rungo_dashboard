@@ -5,7 +5,7 @@ export type StoredSubscription = {
     renewsAt: string;
 };
 
-const SUBSCRIPTION_KEY = "rungo.settings.subscription";
+const SUBSCRIPTION_KEY = "runro.settings.subscription";
 
 export function nextMonthIsoDate() {
     const date = new Date();

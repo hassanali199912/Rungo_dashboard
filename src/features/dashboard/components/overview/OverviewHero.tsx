@@ -1,21 +1,16 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-
-type RangeKey = "7d" | "30d" | "year";
+import OverviewRangeControl, { type OverviewCustomRange, type OverviewRangeKey } from "./OverviewRangeControl";
 
 type OverviewHeroProps = {
-    range: RangeKey;
-    onRangeChange: (range: RangeKey) => void;
+    range: OverviewRangeKey;
+    customRange: OverviewCustomRange;
+    onRangeChange: (range: OverviewRangeKey) => void;
+    onCustomRangeChange: (range: OverviewCustomRange) => void;
 };
 
-export default function OverviewHero({ range, onRangeChange }: OverviewHeroProps) {
+export default function OverviewHero({ range, customRange, onRangeChange, onCustomRangeChange }: OverviewHeroProps) {
     const { t } = useTranslation();
-
-    const ranges: Array<{ key: RangeKey; label: string }> = [
-        { key: "7d", label: t("dashboard.range_7") },
-        { key: "30d", label: t("dashboard.range_30") },
-        { key: "year", label: t("dashboard.range_year") },
-    ];
 
     return (
         <Box
@@ -48,31 +43,12 @@ export default function OverviewHero({ range, onRangeChange }: OverviewHeroProps
                     {t("dashboard.welcome")}
                 </Typography>
             </Box>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {ranges.map((item) => {
-                    const selected = range === item.key;
-                    return (
-                        <Button
-                            key={item.key}
-                            onClick={() => onRangeChange(item.key)}
-                            sx={{
-                                borderRadius: 999,
-                                px: 1.75,
-                                py: 0.75,
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: selected ? "text.primary" : "text.secondary",
-                                bgcolor: selected ? "background.paper" : "transparent",
-                                border: "1px solid",
-                                borderColor: selected ? "divider" : "transparent",
-                                "&:hover": { bgcolor: "background.paper" },
-                            }}
-                        >
-                            {item.label}
-                        </Button>
-                    );
-                })}
-            </Box>
+            <OverviewRangeControl
+                range={range}
+                customRange={customRange}
+                onRangeChange={onRangeChange}
+                onCustomRangeChange={onCustomRangeChange}
+            />
         </Box>
     );
 }

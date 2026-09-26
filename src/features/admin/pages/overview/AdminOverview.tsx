@@ -4,6 +4,10 @@ import PaymentsOutlined from "@mui/icons-material/PaymentsOutlined";
 import PlayCircleOutlined from "@mui/icons-material/PlayCircleOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import { Box, Button, Typography } from "@mui/material";
+import OverviewRangeControl, {
+    defaultOverviewCustomRange,
+    type OverviewRangeKey,
+} from "@/features/dashboard/components/overview/OverviewRangeControl";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
@@ -28,14 +32,10 @@ const ACTIVITY = [
 
 export default function AdminOverview() {
     const { t } = useTranslation();
-    const [range, setRange] = useState<"7d" | "30d" | "year">("30d");
+    const [range, setRange] = useState<OverviewRangeKey>("30d");
+    const [customRange, setCustomRange] = useState(defaultOverviewCustomRange);
     const max = 100;
     const labels = ["W1", "W2", "W3", "W4", "W8", t("dashboard.chart_today")];
-    const ranges: Array<{ key: "7d" | "30d" | "year"; label: string }> = [
-        { key: "7d", label: t("dashboard.range_7") },
-        { key: "30d", label: t("dashboard.range_30") },
-        { key: "year", label: t("dashboard.range_year") },
-    ];
 
     return (
         <SectionWrapper>
@@ -57,31 +57,12 @@ export default function AdminOverview() {
                         {t("admin.overview.welcome")}
                     </Typography>
                 </Box>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                    {ranges.map((item) => {
-                        const selected = range === item.key;
-                        return (
-                            <Button
-                                key={item.key}
-                                onClick={() => setRange(item.key)}
-                                sx={{
-                                    borderRadius: 999,
-                                    px: 1.75,
-                                    py: 0.75,
-                                    fontSize: 13,
-                                    fontWeight: 600,
-                                    color: selected ? "text.primary" : "text.secondary",
-                                    bgcolor: selected ? "background.paper" : "transparent",
-                                    border: "1px solid",
-                                    borderColor: selected ? "divider" : "transparent",
-                                    "&:hover": { bgcolor: "background.paper" },
-                                }}
-                            >
-                                {item.label}
-                            </Button>
-                        );
-                    })}
-                </Box>
+                <OverviewRangeControl
+                    range={range}
+                    customRange={customRange}
+                    onRangeChange={setRange}
+                    onCustomRangeChange={setCustomRange}
+                />
             </Box>
 
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>

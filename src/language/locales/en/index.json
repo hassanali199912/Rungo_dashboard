@@ -8,7 +8,7 @@
     "edit": "Edit"
   },
   "brand": {
-    "name": "RunGo"
+    "name": "RunRo"
   },
   "profile_page": {
     "personal_information": {
@@ -94,7 +94,7 @@
     },
     "toasts": {
       "login_ok": "Signed in. Welcome back.",
-      "register_ok": "Account created. Welcome to RunGo."
+      "register_ok": "Account created. Welcome to RunRo."
     }
   },
   "nav": {
@@ -200,6 +200,10 @@
     "range_7": "7 Days",
     "range_30": "Last 30 Days",
     "range_year": "This Year",
+    "range_custom": "Custom",
+    "range_from": "From",
+    "range_to": "To",
+    "range_invalid": "The end date must be on or after the start date.",
     "stat_earnings": "Total Coin Earnings",
     "stat_views": "Shorts Total Views",
     "stat_students": "Enrolled Students",
@@ -237,6 +241,19 @@
         "title": "Profile",
         "subtitle": "This is how learners see you on shorts and courses.",
         "avatar": "Profile photo",
+        "social_title": "Social links",
+        "linkedin": "LinkedIn",
+        "linkedin_placeholder": "https://linkedin.com/in/your-name",
+        "github": "GitHub",
+        "github_placeholder": "https://github.com/your-name",
+        "facebook": "Facebook",
+        "facebook_placeholder": "https://facebook.com/your-name",
+        "youtube": "YouTube",
+        "youtube_placeholder": "https://youtube.com/@your-name",
+        "x": "X",
+        "x_placeholder": "https://x.com/your-name",
+        "instagram": "Instagram",
+        "instagram_placeholder": "https://instagram.com/your-name",
         "save": "Save profile",
         "saved": "Profile updated."
       },
@@ -657,7 +674,7 @@
     },
     "overview": {
       "eyebrow": "Platform control",
-      "welcome": "RunGo admin studio",
+      "welcome": "RunRo admin studio",
       "stat_instructors": "Instructors",
       "stat_students": "Students",
       "stat_shorts": "Public shorts",
@@ -777,13 +794,20 @@
     },
     "shorts": {
       "title": "Public shorts",
-      "description": "Shorts across every instructor. Hide or restore public visibility.",
-      "search": "Search shorts or instructors",
+      "description": "Shorts across every instructor.",
+      "search": "Search shorts by title or tag",
       "col_title": "Short",
       "col_views": "Views",
       "col_likes": "Likes",
+      "col_comments": "Comments",
+      "col_shares": "Shares",
+      "col_tags": "Tags",
+      "not_set": "None",
+      "empty": "No shorts yet.",
+      "load_failed": "Could not load shorts.",
       "preview": "Preview",
-      "preview_hint": "Mock short preview — sample clip for admin review only."
+      "preview_hint": "Review this short.",
+      "preview_failed": "Could not load this short."
     },
     "content": {
       "visible": "Visible",
@@ -858,13 +882,28 @@
       "description": "Students who bought coin packs. View a receipt or mark it refunded.",
       "search": "Search invoices or students",
       "packs_title": "Student coin packs",
+      "packs_empty": "No coin packages yet.",
+      "packs_load_failed": "Could not load coin packages.",
+      "create_package": "Create package",
+      "package_created": "Coin package created.",
+      "package_create_failed": "Could not create the coin package.",
       "packs_subtitle": "Packs shown in the learner app. Edit, add, or hide a pack.",
       "add_pack": "Add a pack",
       "add_pack_subtitle": "Create another coin bundle for the learner store.",
       "edit_pack": "Edit pack",
       "save_pack": "Save pack",
+      "pack_name": "Name",
       "pack_coins": "Coins",
-      "pack_price": "Price (USD)",
+      "pack_price": "Price",
+      "pack_currency": "Currency",
+      "pack_active": "Package is active",
+      "delete_package": "Delete package",
+      "delete_package_confirm": "Delete {{name}}?",
+      "package_updated": "Coin package updated.",
+      "package_update_failed": "Could not update the coin package.",
+      "package_deleted": "Coin package deleted.",
+      "package_delete_failed": "Could not delete the coin package.",
+      "package_edit_required": "Enter a name, at least 1 coin, a price, and a currency.",
       "bonus": "Bonus coins",
       "add": "Add pack",
       "pack_added": "Coin pack added.",

@@ -17,9 +17,9 @@ export interface ApiErrorBody {
 
 type ApiEvent = 'unauthenticated';
 
-const ACCESS_TOKEN_KEY = 'rungo.accessToken';
-const REFRESH_TOKEN_KEY = 'rungo.refreshToken';
-const AUTH_USER_KEY = 'rungo.authUser';
+const ACCESS_TOKEN_KEY = 'runro.accessToken';
+const REFRESH_TOKEN_KEY = 'runro.refreshToken';
+const AUTH_USER_KEY = 'runro.authUser';
 const PUBLIC_AUTH_PATH = /\/auth\/(?:dashboard\/)?(login|register|refresh)\/?$/i;
 
 const listeners = new Map<ApiEvent, Set<() => void>>();
