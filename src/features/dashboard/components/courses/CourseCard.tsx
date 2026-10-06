@@ -6,6 +6,7 @@ import EditOutlined from "@mui/icons-material/EditOutlined";
 import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import type { FilterViewMode } from "../contentFilter.types";
 import type { CourseItem, CoursePricing, CourseStatus } from "./course.types";
@@ -161,10 +162,15 @@ function CoursePreview({ item }: { item: CourseItem }) {
 
 function CourseMeta({ item, compact }: { item: CourseItem; compact?: boolean }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
     const openMenu = (event: MouseEvent<HTMLElement>) => setMenuAnchor(event.currentTarget);
     const closeMenu = () => setMenuAnchor(null);
+    const openCourse = () => {
+        closeMenu();
+        navigate(`/dashboard/courses/${item.id}`);
+    };
 
     const stats = [
         { key: "students", label: t("dashboard.courses.stat_students"), value: item.students },
@@ -190,8 +196,8 @@ function CourseMeta({ item, compact }: { item: CourseItem; compact?: boolean }) 
                     <MoreHoriz fontSize="small" />
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.courses.action_edit")}</MenuItem>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.courses.action_curriculum")}</MenuItem>
+                    <MenuItem onClick={openCourse}>{t("dashboard.courses.action_edit")}</MenuItem>
+                    <MenuItem onClick={openCourse}>{t("dashboard.courses.action_curriculum")}</MenuItem>
                 </Menu>
             </Box>
 
@@ -242,6 +248,7 @@ function CourseMeta({ item, compact }: { item: CourseItem; compact?: boolean }) 
 
             <Box sx={{ display: "flex", gap: 1, mt: 1.75 }}>
                 <Button
+                    onClick={openCourse}
                     startIcon={<EditOutlined sx={btnIconStartSx} />}
                     sx={[
                         btnIconSlotReset,
@@ -259,6 +266,7 @@ function CourseMeta({ item, compact }: { item: CourseItem; compact?: boolean }) 
                     {t("dashboard.courses.action_edit")}
                 </Button>
                 <Button
+                    onClick={openCourse}
                     startIcon={<AccountTreeOutlined sx={btnIconStartSx} />}
                     sx={[
                         btnIconSlotReset,

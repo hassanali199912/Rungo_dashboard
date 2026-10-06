@@ -1,51 +1,180 @@
 import IosShareOutlined from "@mui/icons-material/IosShareOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import { Box, Typography } from "@mui/material";
+import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import axios from "axios";
+import { useForm, useWatch, type DefaultValues, type Resolver } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import AppFormField from "@/components/form/AppFormField";
 import FormWrapper from "@/components/form/FormWrapper";
-import { showSuccessToast } from "@/components/ui/appToast";
-import { addCourseSchema, type AddCourseValues } from "@/schema";
+import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
+import { useCreateCourse } from "@/features/queryHooks/courses/useCreateCourse";
+import { useCourseOutline } from "@/features/queryHooks/courses/useCourseOutline";
+import { useUpdateCourse, type UpdateCourseInput } from "@/features/queryHooks/courses/useUpdateCourse";
+import type { CourseOutline } from "@/features/queryHooks/courses/types";
+import { useTags } from "@/features/queryHooks/referenceData/useTags";
+import { addCourseSchema, editCourseSchema, type AddCourseValues } from "@/schema";
 import CourseCoverField from "../../components/courses/CourseCoverField";
 import CurriculumBuilder from "../../components/courses/CurriculumBuilder";
 import SectionWrapper from "../../components/SectionWrapper";
 import StudioCard from "../../components/StudioCard";
 
+const COURSE_MEDIA_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
+function getCourseMediaUrl(path: string | null | undefined) {
+    if (!path) return undefined;
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return `${COURSE_MEDIA_BASE_URL}/${path.replace(/^\/+/, "")}`;
+}
+
+function errorDetail(cause: unknown) {
+    if (!axios.isAxiosError(cause)) return undefined;
+    const message = cause.response?.data?.message;
+    return typeof message === "string" ? message : undefined;
+}
+
+function changedCardFields(
+    values: AddCourseValues,
+    baseline: DefaultValues<AddCourseValues> | undefined,
+): Omit<UpdateCourseInput, "courseId"> {
+    const changes: Omit<UpdateCourseInput, "courseId"> = {};
+    if ((baseline?.title ?? "") !== values.title) changes.title = values.title;
+    if ((baseline?.description ?? "") !== values.description) changes.description = values.description;
+
+    const baseTags = baseline?.tags ?? [];
+    const nextTags = values.tags ?? [];
+    if (baseTags.length !== nextTags.length || baseTags.some((tag, index) => tag !== nextTags[index])) {
+        changes.tags = nextTags;
+    }
+
+    if (Number(baseline?.coinPrice ?? 0) !== Number(values.coinPrice)) changes.price = Number(values.coinPrice);
+    if (values.cover instanceof File && values.cover !== baseline?.cover) changes.cover = values.cover;
+    return changes;
+}
+
+function outlineToForm(course: CourseOutline): AddCourseValues {
+    return {
+        title: course.title,
+        description: course.description,
+        tags: course.tagCodes ?? [],
+        coinPrice: course.price,
+        chapters: [...(course.chapters ?? [])]
+            .sort((left, right) => left.position - right.position)
+            .map((chapter) => ({
+                id: chapter.id,
+                title: chapter.title,
+                lessons: [...(chapter.shorts ?? [])]
+                    .sort((left, right) => left.position - right.position)
+                    .map((lesson) => ({
+                        id: lesson.id,
+                        shortId: lesson.shortId,
+                        title: lesson.title,
+                        duration: "—",
+                        access: course.price === 0 ? ("free" as const) : ("coins" as const),
+                        videoUrl: lesson.videoUrl,
+                    })),
+            })),
+    } as AddCourseValues;
+}
+
+function createDefaults(t: (key: string) => string): DefaultValues<AddCourseValues> {
+    return {
+        title: t("dashboard.courses.builder.default_title"),
+        description: t("dashboard.courses.builder.default_description"),
+        tags: [],
+        coinPrice: 0,
+        chapters: [
+            {
+                id: crypto.randomUUID(),
+                title: t("dashboard.courses.builder.default_chapter"),
+                lessons: [
+                    {
+                        id: crypto.randomUUID(),
+                        title: t("dashboard.courses.builder.default_lesson"),
+                        duration: "2:50",
+                        access: "coins",
+                    },
+                    {
+                        id: crypto.randomUUID(),
+                        title: t("dashboard.courses.builder.default_lesson_two"),
+                        duration: "3:10",
+                        access: "coins",
+                    },
+                ],
+            },
+        ],
+    };
+}
+
 export default function AddCourse() {
+    const { courseId } = useParams();
+    if (courseId) return <CourseEditor courseId={courseId} />;
+    return <CourseForm />;
+}
+
+function CourseEditor({ courseId }: { courseId: string }) {
+    const { t } = useTranslation();
+    const outlineQuery = useCourseOutline(courseId);
+
+    if (outlineQuery.isPending) {
+        return (
+            <SectionWrapper title={t("dashboard.courses.builder.edit_title")}>
+                <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                    <CircularProgress aria-label={t("status.loading")} />
+                </Box>
+            </SectionWrapper>
+        );
+    }
+
+    if (outlineQuery.isError || !outlineQuery.data) {
+        return (
+            <SectionWrapper title={t("dashboard.courses.builder.edit_title")}>
+                <Box sx={{ py: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <Typography sx={{ color: "error.main", textAlign: "center" }}>
+                        {t("dashboard.courses.builder.errors.outline_load_error")}
+                    </Typography>
+                    <Button onClick={() => outlineQuery.refetch()} sx={{ borderRadius: 999 }}>
+                        {t("status.retry")}
+                    </Button>
+                </Box>
+            </SectionWrapper>
+        );
+    }
+
+    return (
+        <CourseForm
+            courseId={courseId}
+            defaultValues={outlineToForm(outlineQuery.data)}
+            existingCoverUrl={getCourseMediaUrl(outlineQuery.data.coverUrl)}
+            published={Boolean(outlineQuery.data.publishedAt)}
+        />
+    );
+}
+
+function CourseForm({
+    courseId,
+    defaultValues,
+    existingCoverUrl,
+    published = false,
+}: {
+    courseId?: string;
+    defaultValues?: AddCourseValues;
+    existingCoverUrl?: string;
+    published?: boolean;
+}) {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const isEdit = Boolean(courseId);
+    const createCourse = useCreateCourse();
+    const updateCourse = useUpdateCourse();
+    const tagsQuery = useTags();
+    const isSaving = createCourse.isPending || updateCourse.isPending;
 
     const methods = useForm<AddCourseValues>({
-        resolver: zodResolver(addCourseSchema),
-        defaultValues: {
-            title: t("dashboard.courses.builder.default_title"),
-            description: t("dashboard.courses.builder.default_description"),
-            tags: ["frontend-architecture", "ux-systems"],
-            coinPrice: 150,
-            chapters: [
-                {
-                    id: crypto.randomUUID(),
-                    title: t("dashboard.courses.builder.default_chapter"),
-                    lessons: [
-                        {
-                            id: crypto.randomUUID(),
-                            title: t("dashboard.courses.builder.default_lesson"),
-                            duration: "2:50",
-                            access: "coins",
-                        },
-                        {
-                            id: crypto.randomUUID(),
-                            title: t("dashboard.courses.builder.default_lesson_two"),
-                            duration: "3:10",
-                            access: "coins",
-                        },
-                    ],
-                },
-            ],
-        },
+        resolver: (isEdit ? zodResolver(editCourseSchema) : zodResolver(addCourseSchema)) as Resolver<AddCourseValues>,
+        defaultValues: defaultValues ?? createDefaults(t),
     });
 
     const title = useWatch({ control: methods.control, name: "title" });
@@ -53,45 +182,114 @@ export default function AddCourse() {
     const coinPrice = useWatch({ control: methods.control, name: "coinPrice" });
     const essentialsDone = [title, description].filter((value) => String(value ?? "").trim()).length;
 
-    const tagOptions = [
-        { value: "frontend-architecture", label: t("dashboard.courses.builder.tag_frontend") },
-        { value: "ux-systems", label: t("dashboard.courses.builder.tag_ux") },
-        { value: "code-labs", label: t("dashboard.courses.builder.tag_code") },
-        { value: "kitchen-studio", label: t("dashboard.courses.builder.tag_cooking") },
-    ];
+    const tagOptions = (tagsQuery.data ?? [])
+        .filter((tag) => tag.isActive)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((tag) => ({
+            value: tag.code,
+            label: tag.label,
+        }));
 
     const usdHint =
         Number(coinPrice) > 0
             ? t("dashboard.courses.builder.usd_hint", { amount: (Number(coinPrice) * 0.05).toFixed(2) })
             : "";
 
-    const saveDraft = () => {
-        showSuccessToast(t("dashboard.courses.builder.draft_saved"));
+    const onSubmit = async (values: AddCourseValues) => {
+        if (isEdit && courseId) {
+            const changes = changedCardFields(values, methods.formState.defaultValues);
+            if (Object.keys(changes).length === 0) {
+                showSuccessToast(t("dashboard.courses.builder.unchanged"));
+                return;
+            }
+            try {
+                await updateCourse.mutateAsync({ courseId, ...changes });
+                methods.reset(values);
+                showSuccessToast(t("dashboard.courses.builder.saved"));
+            } catch (cause) {
+                showErrorToast(t("dashboard.courses.builder.errors.update_failed"), errorDetail(cause));
+            }
+            return;
+        }
+
+        try {
+            const created = await createCourse.mutateAsync({
+                title: values.title,
+                description: values.description,
+                tags: values.tags,
+                price: values.coinPrice,
+                cover: values.cover,
+            });
+            showSuccessToast(t("dashboard.courses.builder.created"));
+            navigate(`/dashboard/courses/${created.id}`);
+        } catch (cause) {
+            showErrorToast(t("dashboard.courses.builder.errors.create_failed"), errorDetail(cause));
+        }
     };
 
-    const onSubmit = () => {
-        showSuccessToast(t("dashboard.courses.builder.published"));
-        navigate("/dashboard/courses");
+    const setPublished = async (next: boolean) => {
+        if (!courseId) return;
+        try {
+            await updateCourse.mutateAsync({ courseId, published: next });
+            showSuccessToast(t(next ? "dashboard.courses.builder.published" : "dashboard.courses.builder.unpublished"));
+        } catch (cause) {
+            showErrorToast(t("dashboard.courses.builder.errors.update_failed"), errorDetail(cause));
+        }
     };
 
     return (
         <FormWrapper methods={methods} onSubmit={onSubmit}>
             <SectionWrapper
-                title={t("dashboard.courses.builder.title")}
-                description={t("dashboard.courses.builder.page_subtitle")}
-                actions={[
-                    {
-                        label: t("dashboard.courses.builder.save_draft"),
-                        icon: SaveOutlined,
-                        variant: "outline",
-                        onClick: saveDraft,
-                    },
-                    {
-                        label: t("dashboard.courses.builder.publish"),
-                        icon: IosShareOutlined,
-                        type: "submit",
-                    },
-                ]}
+                title={t(isEdit ? "dashboard.courses.builder.edit_title" : "dashboard.courses.builder.title")}
+                description={t(isEdit ? "dashboard.courses.builder.edit_subtitle" : "dashboard.courses.builder.page_subtitle")}
+                actions={
+                    isEdit
+                        ? [
+                              {
+                                  label: t("dashboard.courses.builder.back_to_courses"),
+                                  to: "/dashboard/courses",
+                                  variant: "outline",
+                                  disabled: isSaving,
+                              },
+                              {
+                                  label: t("dashboard.courses.builder.save"),
+                                  icon: SaveOutlined,
+                                  variant: "outline",
+                                  type: "submit",
+                                  disabled: isSaving,
+                              },
+                              published
+                                  ? {
+                                        label: t("dashboard.courses.builder.unpublish"),
+                                        icon: VisibilityOffOutlined,
+                                        variant: "outline",
+                                        onClick: () => void methods.handleSubmit(() => setPublished(false))(),
+                                        disabled: isSaving,
+                                    }
+                                  : {
+                                        label: t("dashboard.courses.builder.publish"),
+                                        icon: IosShareOutlined,
+                                        type: "button",
+                                        onClick: () => void methods.handleSubmit(() => setPublished(true))(),
+                                        disabled: isSaving,
+                                    },
+                          ]
+                        : [
+                              {
+                                  label: t("dashboard.courses.builder.save_draft"),
+                                  icon: SaveOutlined,
+                                  variant: "outline",
+                                  onClick: () => void methods.handleSubmit(onSubmit)(),
+                                  disabled: isSaving,
+                              },
+                              {
+                                  label: t("dashboard.courses.builder.create"),
+                                  icon: IosShareOutlined,
+                                  type: "submit",
+                                  disabled: isSaving,
+                              },
+                          ]
+                }
             >
                 <Box
                     sx={{
@@ -115,7 +313,7 @@ export default function AddCourse() {
                                     type="text"
                                     label={t("dashboard.courses.builder.track_title")}
                                     placeholder={t("dashboard.courses.builder.track_title_placeholder")}
-                                    maxLength={80}
+                                    maxLength={120}
                                 />
                                 <AppFormField
                                     name="description"
@@ -130,13 +328,14 @@ export default function AddCourse() {
                                     label={t("dashboard.courses.builder.category")}
                                     placeholder={t("dashboard.courses.builder.add_category")}
                                     options={tagOptions}
-                                    freeSolo
+                                    disabled={tagsQuery.isPending}
                                 />
                                 <CourseCoverField
                                     name="cover"
                                     label={t("dashboard.courses.builder.cover")}
                                     hint={t("dashboard.courses.builder.cover_hint")}
                                     changeLabel={t("dashboard.courses.builder.change_cover")}
+                                    existingImageUrl={existingCoverUrl}
                                 />
                             </Box>
                         </StudioCard>
@@ -160,7 +359,7 @@ export default function AddCourse() {
                         </StudioCard>
                     </Box>
 
-                    <CurriculumBuilder />
+                    <CurriculumBuilder courseId={courseId} />
                 </Box>
             </SectionWrapper>
         </FormWrapper>

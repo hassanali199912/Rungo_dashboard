@@ -4,14 +4,34 @@ import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
 import MenuBookOutlined from "@mui/icons-material/MenuBookOutlined";
 import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
-import { Box, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useMyCourses } from "@/features/queryHooks/courses/useMyCourses";
 import ContentFilterBar from "../../components/ContentFilterBar";
 import { defaultContentFilter, type ContentFilterState } from "../../components/contentFilter.types";
 import CourseCard from "../../components/courses/CourseCard";
+import type { CourseItem } from "../../components/courses/course.types";
 import SectionWrapper from "../../components/SectionWrapper";
 import StatisticCards, { type StatisticCardItem } from "../../components/StatisticCards";
-import { countCoursesByStatus, filterCourses, getMockCourses } from "./mockCourses";
+import { countCoursesByStatus, filterCourses } from "./mockCourses";
+
+const COURSE_PARAMS = { page: 1, limit: 20 } as const;
+const COURSE_MEDIA_BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
+
+function getCourseMediaUrl(path: string | null) {
+    if (!path) return undefined;
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return `${COURSE_MEDIA_BASE_URL}/${path.replace(/^\/+/, "")}`;
+}
+
+function getCourseDomain(tagCodes: string[]) {
+    const tags = tagCodes.map((tag) => tag.toLowerCase());
+    if (tags.some((tag) => tag.includes("ui") || tag.includes("ux") || tag.includes("design"))) return "ui-ux";
+    if (tags.some((tag) => tag.includes("code") || tag.includes("program"))) return "code";
+    if (tags.some((tag) => tag.includes("cook") || tag.includes("food"))) return "cooking";
+    if (tags.some((tag) => tag.includes("fit") || tag.includes("sport"))) return "fitness";
+    return "all";
+}
 
 export default function Courses() {
     const { t } = useTranslation();
@@ -19,8 +39,31 @@ export default function Courses() {
         ...defaultContentFilter,
         sort: "enrollments",
     });
+    const coursesQuery = useMyCourses(COURSE_PARAMS);
 
-    const courses = useMemo(() => getMockCourses(t), [t]);
+    const courses = useMemo<CourseItem[]>(
+        () =>
+            (coursesQuery.data?.items ?? []).map((item) => ({
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                category: item.tagCodes[0] ?? t("dashboard.courses.uncategorized"),
+                domain: getCourseDomain(item.tagCodes),
+                status: item.publishedAt ? "published" : "draft",
+                pricing: item.price === 0 ? "free" : "coins",
+                lessons: 0,
+                duration: "—",
+                students: "—",
+                studentsCount: 0,
+                completion: "—",
+                completionValue: 0,
+                shorts: 0,
+                topics: item.tagCodes,
+                createdAt: item.createdAt ?? item.publishedAt ?? "",
+                thumbnail: getCourseMediaUrl(item.coverUrl),
+            })),
+        [coursesQuery.data, t],
+    );
     const scopedCourses = useMemo(() => {
         return filterCourses(courses, { ...filter, status: "all" });
     }, [courses, filter]);
@@ -92,7 +135,6 @@ export default function Courses() {
                         { value: "all", label: t("dashboard.courses.tier_all") },
                         { value: "free", label: t("dashboard.courses.tier_free") },
                         { value: "coins", label: t("dashboard.courses.tier_coins") },
-                        { value: "premium", label: t("dashboard.courses.tier_premium") },
                     ]}
                     sortLabel={t("dashboard.courses.filter_sort")}
                     sortOptions={[
@@ -105,12 +147,24 @@ export default function Courses() {
                         { value: "all", label: t("dashboard.courses.status_all"), count: counts.all },
                         { value: "published", label: t("dashboard.courses.status_published"), count: counts.published },
                         { value: "draft", label: t("dashboard.courses.status_draft"), count: counts.draft },
-                        { value: "review", label: t("dashboard.courses.status_review"), count: counts.review },
                     ]}
                 />
             </Box>
 
-            {visibleCourses.length === 0 ? (
+            {coursesQuery.isPending ? (
+                <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+                    <CircularProgress aria-label={t("status.loading")} />
+                </Box>
+            ) : coursesQuery.isError ? (
+                <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    <Typography sx={{ color: "error.main", textAlign: "center" }}>
+                        {t("dashboard.courses.load_error")}
+                    </Typography>
+                    <Button onClick={() => coursesQuery.refetch()} sx={{ borderRadius: 999 }}>
+                        {t("status.retry")}
+                    </Button>
+                </Box>
+            ) : visibleCourses.length === 0 ? (
                 <Typography sx={{ mt: 4, color: "text.secondary", textAlign: "center" }}>
                     {t("dashboard.courses.empty")}
                 </Typography>

@@ -11,9 +11,10 @@ type CourseCoverFieldProps = {
     label: string;
     hint?: string;
     changeLabel: string;
+    existingImageUrl?: string;
 };
 
-export default function CourseCoverField({ name, label, hint, changeLabel }: CourseCoverFieldProps) {
+export default function CourseCoverField({ name, label, hint, changeLabel, existingImageUrl }: CourseCoverFieldProps) {
     const { control } = useFormContext();
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
@@ -49,6 +50,13 @@ export default function CourseCoverField({ name, label, hint, changeLabel }: Cou
                             >
                                 {file ? (
                                     <CoverPreview file={file} />
+                                ) : existingImageUrl ? (
+                                    <Box
+                                        component="img"
+                                        src={existingImageUrl}
+                                        alt=""
+                                        sx={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", display: "block" }}
+                                    />
                                 ) : (
                                     <Box
                                         component="button"
@@ -71,7 +79,7 @@ export default function CourseCoverField({ name, label, hint, changeLabel }: Cou
                                     </Box>
                                 )}
                             </Box>
-                            {file && (
+                            {(file || existingImageUrl) && (
                                 <AppBtn
                                     customType="outline"
                                     type="button"
@@ -85,7 +93,7 @@ export default function CourseCoverField({ name, label, hint, changeLabel }: Cou
                                 component="input"
                                 ref={inputRef}
                                 type="file"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/webp"
                                 onChange={handleChange}
                                 sx={{ display: "none" }}
                             />

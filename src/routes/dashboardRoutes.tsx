@@ -29,6 +29,7 @@ const dashboardRoutes: RouteObject[] = [
             { path: "shorts/:id/edit", element: <AddShort /> },
             { path: "courses", element: <Courses /> },
             { path: "courses/new", element: <AddCourse /> },
+            { path: "courses/:courseId", element: <AddCourse /> },
             { path: "subscription", element: <Subscription /> },
             { path: "settings", element: <Settings /> },
         ],
