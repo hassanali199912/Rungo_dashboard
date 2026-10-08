@@ -81,28 +81,15 @@ function outlineToForm(course: CourseOutline): AddCourseValues {
 
 function createDefaults(t: (key: string) => string): DefaultValues<AddCourseValues> {
     return {
-        title: t("dashboard.courses.builder.default_title"),
-        description: t("dashboard.courses.builder.default_description"),
+        title: "",
+        description: "",
         tags: [],
         coinPrice: 0,
         chapters: [
             {
                 id: crypto.randomUUID(),
                 title: t("dashboard.courses.builder.default_chapter"),
-                lessons: [
-                    {
-                        id: crypto.randomUUID(),
-                        title: t("dashboard.courses.builder.default_lesson"),
-                        duration: "2:50",
-                        access: "coins",
-                    },
-                    {
-                        id: crypto.randomUUID(),
-                        title: t("dashboard.courses.builder.default_lesson_two"),
-                        duration: "3:10",
-                        access: "coins",
-                    },
-                ],
+                lessons: [],
             },
         ],
     };
@@ -245,50 +232,50 @@ function CourseForm({
                 actions={
                     isEdit
                         ? [
-                              {
-                                  label: t("dashboard.courses.builder.back_to_courses"),
-                                  to: "/dashboard/courses",
-                                  variant: "outline",
-                                  disabled: isSaving,
-                              },
-                              {
-                                  label: t("dashboard.courses.builder.save"),
-                                  icon: SaveOutlined,
-                                  variant: "outline",
-                                  type: "submit",
-                                  disabled: isSaving,
-                              },
-                              published
-                                  ? {
-                                        label: t("dashboard.courses.builder.unpublish"),
-                                        icon: VisibilityOffOutlined,
-                                        variant: "outline",
-                                        onClick: () => void methods.handleSubmit(() => setPublished(false))(),
-                                        disabled: isSaving,
-                                    }
-                                  : {
-                                        label: t("dashboard.courses.builder.publish"),
-                                        icon: IosShareOutlined,
-                                        type: "button",
-                                        onClick: () => void methods.handleSubmit(() => setPublished(true))(),
-                                        disabled: isSaving,
-                                    },
-                          ]
+                            {
+                                label: t("dashboard.courses.builder.back_to_courses"),
+                                to: "/dashboard/courses",
+                                variant: "outline",
+                                disabled: isSaving,
+                            },
+                            {
+                                label: t("dashboard.courses.builder.save"),
+                                icon: SaveOutlined,
+                                variant: "outline",
+                                type: "submit",
+                                disabled: isSaving,
+                            },
+                            published
+                                ? {
+                                    label: t("dashboard.courses.builder.unpublish"),
+                                    icon: VisibilityOffOutlined,
+                                    variant: "outline",
+                                    onClick: () => void methods.handleSubmit(() => setPublished(false))(),
+                                    disabled: isSaving,
+                                }
+                                : {
+                                    label: t("dashboard.courses.builder.publish"),
+                                    icon: IosShareOutlined,
+                                    type: "button",
+                                    onClick: () => void methods.handleSubmit(() => setPublished(true))(),
+                                    disabled: isSaving,
+                                },
+                        ]
                         : [
-                              {
-                                  label: t("dashboard.courses.builder.save_draft"),
-                                  icon: SaveOutlined,
-                                  variant: "outline",
-                                  onClick: () => void methods.handleSubmit(onSubmit)(),
-                                  disabled: isSaving,
-                              },
-                              {
-                                  label: t("dashboard.courses.builder.create"),
-                                  icon: IosShareOutlined,
-                                  type: "submit",
-                                  disabled: isSaving,
-                              },
-                          ]
+                            {
+                                label: t("dashboard.courses.builder.save_draft"),
+                                icon: SaveOutlined,
+                                variant: "outline",
+                                onClick: () => void methods.handleSubmit(onSubmit)(),
+                                disabled: isSaving,
+                            },
+                            {
+                                label: t("dashboard.courses.builder.create"),
+                                icon: IosShareOutlined,
+                                type: "submit",
+                                disabled: isSaving,
+                            },
+                        ]
                 }
             >
                 <Box
