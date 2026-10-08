@@ -51,7 +51,7 @@ export default function Courses() {
                 domain: getCourseDomain(item.tagCodes),
                 status: item.publishedAt ? "published" : "draft",
                 pricing: item.price === 0 ? "free" : "coins",
-                lessons: 0,
+                lessons: item.lessonCount ?? 0,
                 duration: "—",
                 students: "—",
                 studentsCount: 0,

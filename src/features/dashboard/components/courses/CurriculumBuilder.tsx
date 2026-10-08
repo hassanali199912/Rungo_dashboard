@@ -1,10 +1,14 @@
 import Add from "@mui/icons-material/Add";
+import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import CloseOutlined from "@mui/icons-material/CloseOutlined";
 import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlined from "@mui/icons-material/DeleteOutlined";
 import DragIndicator from "@mui/icons-material/DragIndicator";
+import EditOutlined from "@mui/icons-material/EditOutlined";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 import FolderOpenOutlined from "@mui/icons-material/FolderOpenOutlined";
 import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
-import { Box, CircularProgress, IconButton, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Box, CircularProgress, IconButton, MenuItem, Select, TextField, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import axios from "axios";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
@@ -18,6 +22,8 @@ import { useAddLessonVideo } from "@/features/queryHooks/courses/useAddLessonVid
 import { useAttachLesson } from "@/features/queryHooks/courses/useAttachLesson";
 import { useSaveOutline } from "@/features/queryHooks/courses/useSaveOutline";
 import { useDetachLesson } from "@/features/queryHooks/courses/useDetachLesson";
+import { useUpdateChapter } from "@/features/queryHooks/courses/useUpdateChapter";
+import { useUpdateLessonTitle } from "@/features/queryHooks/courses/useUpdateLessonTitle";
 import { useShorts } from "@/features/queryHooks/shorts/useShorts";
 import { formOutlinedSingleLineInputSx } from "@/components/form/formFieldLayout";
 import type { AddCourseValues, CourseChapterValues, CourseLessonValues } from "@/schema";
@@ -31,12 +37,18 @@ type LessonPoint = {
 };
 
 const MAX_LESSON_TITLE = 70;
+const MAX_CHAPTER_TITLE = 120;
 const MAX_LESSON_VIDEO_BYTES = 200 * 1024 * 1024;
 const LESSON_VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 
 function isLessonVideo(file: File) {
     if (LESSON_VIDEO_TYPES.has(file.type)) return true;
     return /\.(mp4|mov|webm)$/i.test(file.name);
+}
+
+function axiosMessage(cause: unknown) {
+    const message = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
+    return typeof message === "string" ? message : undefined;
 }
 
 function createId() {
@@ -204,21 +216,18 @@ export default function CurriculumBuilder({ courseId }: { courseId?: string }) {
     const { fields, append, remove } = useFieldArray({ control, name: "chapters", keyName: "_key" });
     const watchedChapters = useWatch({ control, name: "chapters" }) ?? [];
     const lessonTotal = watchedChapters.reduce((total, chapter) => total + (chapter.lessons?.length ?? 0), 0);
-    const [targetChapter, setTargetChapter] = useState(0);
     const [dragLesson, setDragLesson] = useState<LessonPoint | null>(null);
     const [overLesson, setOverLesson] = useState<LessonPoint | null>(null);
+    const [namingChapter, setNamingChapter] = useState(false);
+    const [chapterTitle, setChapterTitle] = useState("");
     const addChapterRequest = useAddChapter();
     const addLessonRequest = useAddLessonVideo();
     const saveOutline = useSaveOutline();
     const detachLesson = useDetachLesson();
 
     const addChapter = async () => {
-        const title = t("dashboard.courses.builder.untitled_chapter", { number: fields.length + 1 });
-        if (!courseId) {
-            append({ id: createId(), title, lessons: [] });
-            setTargetChapter(fields.length);
-            return;
-        }
+        const title = chapterTitle.trim();
+        if (!title || !courseId || addChapterRequest.isPending) return;
 
         try {
             const created = await addChapterRequest.mutateAsync({ courseId, title });
@@ -227,7 +236,8 @@ export default function CurriculumBuilder({ courseId }: { courseId?: string }) {
                 title: created.title || title,
                 lessons: [],
             });
-            setTargetChapter(fields.length);
+            setChapterTitle("");
+            setNamingChapter(false);
             showSuccessToast(t("dashboard.courses.builder.chapter_added"));
         } catch (cause) {
             const message = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
@@ -368,50 +378,16 @@ export default function CurriculumBuilder({ courseId }: { courseId?: string }) {
                         onRemoveChapter={() => {
                             if (fields.length <= 1) return;
                             remove(chapterIndex);
-                            setTargetChapter((current) => Math.max(0, Math.min(current, fields.length - 2)));
                         }}
                         onRemoveLesson={(lessonIndex) => void removeLesson(chapterIndex, lessonIndex)}
                         removingLesson={detachLesson.isPending}
-                    />
-                ))}
-
-                <AppBtn
-                    customType="outline"
-                    type="button"
-                    disabled={addChapterRequest.isPending}
-                    startIcon={<Add sx={btnIconStartSx} />}
-                    onClick={() => void addChapter()}
-                    sx={{ borderRadius: 999, alignSelf: "flex-start" }}
-                >
-                    {t("dashboard.courses.builder.add_new_chapter")}
-                </AppBtn>
-
-                {formState.errors.chapters?.root?.message || formState.errors.chapters?.message ? (
-                    <Typography sx={{ color: "error.main", fontSize: 13 }}>
-                        {t(formState.errors.chapters.root?.message || formState.errors.chapters.message || "")}
-                    </Typography>
-                ) : null}
-
-                <Box>
-                    <LessonComposer
-                        chapterCount={fields.length}
-                        targetChapter={Math.min(targetChapter, Math.max(fields.length - 1, 0))}
-                        onTargetChapterChange={setTargetChapter}
-                        pending={addLessonRequest.isPending}
-                        onAdd={async (lesson) => {
-                            const index = Math.min(targetChapter, Math.max(fields.length - 1, 0));
-                            await addLesson(index, lesson);
+                        courseId={courseId}
+                        addingLesson={addLessonRequest.isPending}
+                        onAddLesson={async (lesson) => {
+                            await addLesson(chapterIndex, lesson);
                             showSuccessToast(t("dashboard.courses.builder.lesson_added"));
                         }}
-                    />
-                </Box>
-                {courseId ? (
-                    <AttachFeedShort
-                        courseId={courseId}
-                        chapterCount={fields.length}
-                        targetChapter={Math.min(targetChapter, Math.max(fields.length - 1, 0))}
-                        onTargetChapterChange={setTargetChapter}
-                        onAttached={(chapterIndex, lesson) => {
+                        onAttachLesson={(lesson) => {
                             const current = getValues(`chapters.${chapterIndex}.lessons`) ?? [];
                             setValue(`chapters.${chapterIndex}.lessons`, [...current, lesson], {
                                 shouldValidate: true,
@@ -419,7 +395,57 @@ export default function CurriculumBuilder({ courseId }: { courseId?: string }) {
                             });
                         }}
                     />
+                ))}
+
+                {namingChapter ? (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+                        <TextField
+                            value={chapterTitle}
+                            onChange={(event) => setChapterTitle(event.target.value)}
+                            placeholder={t("dashboard.courses.builder.chapter_name_placeholder")}
+                            label={t("dashboard.courses.builder.chapter_name")}
+                            sx={{ ...formOutlinedSingleLineInputSx, minWidth: 220, flex: 1 }}
+                        />
+                        <AppBtn
+                            customType="primary"
+                            type="button"
+                            disabled={!chapterTitle.trim() || addChapterRequest.isPending}
+                            onClick={() => void addChapter()}
+                            sx={{ borderRadius: 999 }}
+                        >
+                            {t("dashboard.courses.builder.add_chapter")}
+                        </AppBtn>
+                        <AppBtn
+                            customType="outline"
+                            type="button"
+                            disabled={addChapterRequest.isPending}
+                            onClick={() => {
+                                setNamingChapter(false);
+                                setChapterTitle("");
+                            }}
+                            sx={{ borderRadius: 999 }}
+                        >
+                            {t("dashboard.courses.builder.cancel")}
+                        </AppBtn>
+                    </Box>
+                ) : (
+                    <AppBtn
+                        customType="outline"
+                        type="button"
+                        startIcon={<Add sx={btnIconStartSx} />}
+                        onClick={() => setNamingChapter(true)}
+                        sx={{ borderRadius: 999, alignSelf: "flex-start" }}
+                    >
+                        {t("dashboard.courses.builder.add_new_chapter")}
+                    </AppBtn>
+                )}
+
+                {formState.errors.chapters?.root?.message || formState.errors.chapters?.message ? (
+                    <Typography sx={{ color: "error.main", fontSize: 13 }}>
+                        {t(formState.errors.chapters.root?.message || formState.errors.chapters.message || "")}
+                    </Typography>
                 ) : null}
+
             </Box>
         </StudioCard>
     );
@@ -437,6 +463,10 @@ function ChapterBlock({
     onRemoveChapter,
     onRemoveLesson,
     removingLesson = false,
+    courseId,
+    addingLesson = false,
+    onAddLesson,
+    onAttachLesson,
 }: {
     chapterIndex: number;
     canRemove: boolean;
@@ -449,13 +479,68 @@ function ChapterBlock({
     onRemoveChapter: () => void;
     onRemoveLesson: (lessonIndex: number) => void;
     removingLesson?: boolean;
+    courseId?: string;
+    addingLesson?: boolean;
+    onAddLesson: (lesson: CourseLessonValues) => Promise<void>;
+    onAttachLesson: (lesson: CourseLessonValues) => void;
 }) {
     const { t } = useTranslation();
-    const { register } = useFormContext<AddCourseValues>();
+    const { setValue } = useFormContext<AddCourseValues>();
     const lessons = useWatch({ name: `chapters.${chapterIndex}.lessons` }) as CourseLessonValues[] | undefined;
+    const chapterTitle = (useWatch({ name: `chapters.${chapterIndex}.title` }) as string | undefined) ?? "";
+    const chapterId = useWatch({ name: `chapters.${chapterIndex}.id` }) as string | undefined;
     const items = lessons ?? [];
+    const updateChapter = useUpdateChapter();
+    const updateLessonTitle = useUpdateLessonTitle();
     const [preview, setPreview] = useState<{ file: File; title: string } | null>(null);
     const [loadingLessonId, setLoadingLessonId] = useState<string | null>(null);
+    const [editingChapter, setEditingChapter] = useState(false);
+    const [chapterDraft, setChapterDraft] = useState("");
+    const [editingLesson, setEditingLesson] = useState<number | null>(null);
+    const [lessonDraft, setLessonDraft] = useState("");
+
+    const saveChapterTitle = async () => {
+        const next = chapterDraft.trim();
+        if (!next || updateChapter.isPending) return;
+        if (next.length > MAX_CHAPTER_TITLE) {
+            showErrorToast(t("dashboard.courses.builder.errors.title_max"));
+            return;
+        }
+        if (courseId && chapterId && next !== chapterTitle) {
+            try {
+                const updated = await updateChapter.mutateAsync({ courseId, chapterId, title: next });
+                setValue(`chapters.${chapterIndex}.title`, updated.title || next, { shouldDirty: false, shouldValidate: true });
+                showSuccessToast(t("dashboard.courses.builder.chapter_renamed"));
+            } catch (cause) {
+                showErrorToast(t("dashboard.courses.builder.errors.chapter_rename_failed"), axiosMessage(cause));
+                return;
+            }
+        } else {
+            setValue(`chapters.${chapterIndex}.title`, next, { shouldDirty: false, shouldValidate: true });
+        }
+        setEditingChapter(false);
+    };
+
+    const saveLessonTitle = async (lessonIndex: number) => {
+        const lesson = items[lessonIndex];
+        const next = lessonDraft.trim();
+        if (!lesson || !next || updateLessonTitle.isPending) return;
+        if (next.length > MAX_LESSON_TITLE) {
+            showErrorToast(t("dashboard.courses.builder.errors.lesson_title_max"));
+            return;
+        }
+        if (courseId && lesson.shortId && next !== lesson.title) {
+            try {
+                await updateLessonTitle.mutateAsync({ courseId, shortId: lesson.shortId, title: next });
+                showSuccessToast(t("dashboard.courses.builder.lesson_renamed"));
+            } catch (cause) {
+                showErrorToast(t("dashboard.courses.builder.errors.lesson_rename_failed"), axiosMessage(cause));
+                return;
+            }
+        }
+        setValue(`chapters.${chapterIndex}.lessons.${lessonIndex}.title`, next, { shouldDirty: false, shouldValidate: true });
+        setEditingLesson(null);
+    };
 
     const openLesson = async (lesson: CourseLessonValues) => {
         if (lesson.video instanceof File) {
@@ -476,11 +561,15 @@ function ChapterBlock({
     };
 
     return (
-        <Box
+        <Accordion
+            defaultExpanded={chapterIndex === 0}
+            disableGutters
+            elevation={0}
             sx={{
                 borderRadius: "1rem",
                 bgcolor: "surface.main",
-                p: 1.75,
+                overflow: "hidden",
+                "&:before": { display: "none" },
             }}
             onDragOver={(event) => {
                 if (!items.length) event.preventDefault();
@@ -492,25 +581,94 @@ function ChapterBlock({
                 }
             }}
         >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: items.length ? 1.5 : 0 }}>
-                <TextField
-                    {...register(`chapters.${chapterIndex}.title`)}
-                    variant="standard"
-                    slotProps={{ input: { disableUnderline: true } }}
-                    sx={{
-                        flex: 1,
-                        "& .MuiInputBase-input": { fontWeight: 800, fontSize: 15, py: 0.5 },
-                    }}
-                />
+            <AccordionSummary
+                component="div"
+                expandIcon={<ExpandMore />}
+                sx={{
+                    px: 1.75,
+                    "& .MuiAccordionSummary-content": { alignItems: "center", gap: 1, my: 1.25, minWidth: 0 },
+                }}
+            >
+                {editingChapter ? (
+                    <TextField
+                        value={chapterDraft}
+                        onChange={(event) => setChapterDraft(event.target.value)}
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => {
+                            event.stopPropagation();
+                            if (event.key === "Enter") {
+                                event.preventDefault();
+                                void saveChapterTitle();
+                            }
+                            if (event.key === "Escape") setEditingChapter(false);
+                        }}
+                        slotProps={{ htmlInput: { maxLength: MAX_CHAPTER_TITLE } }}
+                        sx={{ ...formOutlinedSingleLineInputSx, flex: 1, minWidth: 0 }}
+                    />
+                ) : (
+                    <Typography sx={{ flex: 1, minWidth: 0, fontWeight: 800, fontSize: 15 }} noWrap>
+                        {chapterTitle}
+                    </Typography>
+                )}
                 <Typography sx={{ fontSize: 12, color: "text.secondary", whiteSpace: "nowrap" }}>
                     {t("dashboard.courses.builder.chapter_meta", { count: items.length })}
                 </Typography>
+                {editingChapter ? (
+                    <>
+                        <IconButton
+                            type="button"
+                            aria-label={t("dashboard.courses.builder.save_name")}
+                            disabled={!chapterDraft.trim() || updateChapter.isPending}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                void saveChapterTitle();
+                            }}
+                            sx={{ color: "primary.main" }}
+                        >
+                            <CheckOutlined fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                            type="button"
+                            aria-label={t("dashboard.courses.builder.cancel")}
+                            disabled={updateChapter.isPending}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                setEditingChapter(false);
+                            }}
+                            sx={{ color: "text.secondary" }}
+                        >
+                            <CloseOutlined fontSize="small" />
+                        </IconButton>
+                    </>
+                ) : (
+                    <IconButton
+                        type="button"
+                        aria-label={t("dashboard.courses.builder.edit_chapter")}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            setChapterDraft(chapterTitle);
+                            setEditingChapter(true);
+                        }}
+                        sx={{ color: "text.secondary" }}
+                    >
+                        <EditOutlined fontSize="small" />
+                    </IconButton>
+                )}
                 {canRemove ? (
-                    <IconButton aria-label={t("dashboard.courses.builder.remove_chapter")} onClick={onRemoveChapter} sx={{ color: "text.secondary" }}>
+                    <IconButton
+                        type="button"
+                        aria-label={t("dashboard.courses.builder.remove_chapter")}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onRemoveChapter();
+                        }}
+                        sx={{ color: "text.secondary" }}
+                    >
                         <DeleteOutlined fontSize="small" />
                     </IconButton>
                 ) : null}
-            </Box>
+            </AccordionSummary>
+            <AccordionDetails sx={{ px: 1.75, pt: 0, pb: 1.75 }}>
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {items.map((lesson, lessonIndex) => {
@@ -584,19 +742,63 @@ function ChapterBlock({
                                 ) : null}
                             </Box>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <TextField
-                                    {...register(`chapters.${chapterIndex}.lessons.${lessonIndex}.title`)}
-                                    variant="standard"
-                                    slotProps={{ input: { disableUnderline: true } }}
-                                    sx={{
-                                        width: "100%",
-                                        "& .MuiInputBase-input": { fontWeight: 700, fontSize: 14, py: 0.25 },
-                                    }}
-                                />
+                                {editingLesson === lessonIndex ? (
+                                    <TextField
+                                        value={lessonDraft}
+                                        onChange={(event) => setLessonDraft(event.target.value)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                                event.preventDefault();
+                                                void saveLessonTitle(lessonIndex);
+                                            }
+                                            if (event.key === "Escape") setEditingLesson(null);
+                                        }}
+                                        slotProps={{ htmlInput: { maxLength: MAX_LESSON_TITLE } }}
+                                        sx={{ ...formOutlinedSingleLineInputSx, width: "100%" }}
+                                    />
+                                ) : (
+                                    <Typography sx={{ fontWeight: 700, fontSize: 14 }} noWrap>
+                                        {lesson.title}
+                                    </Typography>
+                                )}
                                 <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
                                     {t(`dashboard.courses.builder.access_${lesson.access}`)} · {lesson.duration}
                                 </Typography>
                             </Box>
+                            {editingLesson === lessonIndex ? (
+                                <>
+                                    <IconButton
+                                        type="button"
+                                        aria-label={t("dashboard.courses.builder.save_name")}
+                                        disabled={!lessonDraft.trim() || updateLessonTitle.isPending}
+                                        onClick={() => void saveLessonTitle(lessonIndex)}
+                                        sx={{ color: "primary.main" }}
+                                    >
+                                        <CheckOutlined fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                        type="button"
+                                        aria-label={t("dashboard.courses.builder.cancel")}
+                                        disabled={updateLessonTitle.isPending}
+                                        onClick={() => setEditingLesson(null)}
+                                        sx={{ color: "text.secondary" }}
+                                    >
+                                        <CloseOutlined fontSize="small" />
+                                    </IconButton>
+                                </>
+                            ) : (
+                                <IconButton
+                                    type="button"
+                                    aria-label={t("dashboard.courses.builder.edit_lesson")}
+                                    onClick={() => {
+                                        setLessonDraft(lesson.title);
+                                        setEditingLesson(lessonIndex);
+                                    }}
+                                    sx={{ color: "text.secondary" }}
+                                >
+                                    <EditOutlined fontSize="small" />
+                                </IconButton>
+                            )}
                             <IconButton
                                 aria-label={t("dashboard.courses.builder.remove_lesson")}
                                 disabled={removingLesson}
@@ -609,25 +811,30 @@ function ChapterBlock({
                     );
                 })}
             </Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, my: 2.5 }}>
+                <LessonComposer pending={addingLesson} onAdd={onAddLesson} />
+                {courseId ? (
+                    <AttachFeedShort
+                        courseId={courseId}
+                        chapterIndex={chapterIndex}
+                        onAttached={onAttachLesson}
+                    />
+                ) : null}
+            </Box>
             <LessonVideoDialog
                 file={preview?.file ?? null}
                 title={preview?.title}
                 onClose={() => setPreview(null)}
             />
-        </Box>
+            </AccordionDetails>
+        </Accordion>
     );
 }
 
 function LessonComposer({
-    chapterCount,
-    targetChapter,
-    onTargetChapterChange,
     onAdd,
     pending = false,
 }: {
-    chapterCount: number;
-    targetChapter: number;
-    onTargetChapterChange: (index: number) => void;
     onAdd: (lesson: CourseLessonValues) => Promise<void>;
     pending?: boolean;
 }) {
@@ -777,7 +984,7 @@ function LessonComposer({
             <Box
                 sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "1fr 140px auto" },
+                    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
                     gap: 1.25,
                     alignItems: "end",
                 }}
@@ -794,32 +1001,10 @@ function LessonComposer({
                         sx={{ ...formOutlinedSingleLineInputSx, "& .MuiInputBase-root": { minHeight: 48 } }}
                     />
                 </Box>
-                <Box>
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 0.75, color: "text.secondary" }}>
-                        {t("dashboard.courses.builder.target_chapter")}
-                    </Typography>
-                    <Select
-                        value={String(targetChapter)}
-                        onChange={(event) => onTargetChapterChange(Number(event.target.value))}
-                        disabled={chapterCount === 0}
-                        sx={{
-                            width: "100%",
-                            minHeight: 48,
-                            borderRadius: 999,
-                            bgcolor: "background.paper",
-                        }}
-                    >
-                        {Array.from({ length: chapterCount }).map((_, index) => (
-                            <MenuItem key={index} value={String(index)}>
-                                {t("dashboard.courses.builder.chapter_option", { number: index + 1 })}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </Box>
                 <AppBtn
                     customType="primary"
                     type="button"
-                    disabled={!title.trim() || !video || chapterCount === 0 || pending}
+                    disabled={!title.trim() || !video || pending}
                     startIcon={<Add sx={btnIconStartSx} />}
                     onClick={handleAdd}
                     sx={{ borderRadius: 999, minHeight: 48 }}
@@ -833,16 +1018,12 @@ function LessonComposer({
 
 function AttachFeedShort({
     courseId,
-    chapterCount,
-    targetChapter,
-    onTargetChapterChange,
+    chapterIndex,
     onAttached,
 }: {
     courseId: string;
-    chapterCount: number;
-    targetChapter: number;
-    onTargetChapterChange: (index: number) => void;
-    onAttached: (chapterIndex: number, lesson: CourseLessonValues) => void;
+    chapterIndex: number;
+    onAttached: (lesson: CourseLessonValues) => void;
 }) {
     const { t } = useTranslation();
     const chapters = useWatch<AddCourseValues, "chapters">({ name: "chapters" }) ?? [];
@@ -850,7 +1031,7 @@ function AttachFeedShort({
     const attachLesson = useAttachLesson();
     const [shortId, setShortId] = useState("");
     const shorts = shortsQuery.data?.items ?? [];
-    const chapterId = chapters[targetChapter]?.id;
+    const chapterId = chapters[chapterIndex]?.id;
 
     const handleAttach = async () => {
         if (!chapterId || !shortId || attachLesson.isPending) return;
@@ -858,7 +1039,7 @@ function AttachFeedShort({
         try {
             const created = await attachLesson.mutateAsync({ courseId, chapterId, shortId });
             const lessonShortId = created.shortId || shortId;
-            onAttached(targetChapter, {
+            onAttached({
                 id: created.id || lessonShortId,
                 shortId: lessonShortId,
                 title: created.title || selected?.title || t("dashboard.courses.builder.untitled_lesson"),
@@ -894,28 +1075,11 @@ function AttachFeedShort({
             <Box
                 sx={{
                     display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "160px 1fr auto" },
+                    gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
                     gap: 1.25,
                     alignItems: "end",
                 }}
             >
-                <Box>
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 0.75, color: "text.secondary" }}>
-                        {t("dashboard.courses.builder.target_chapter")}
-                    </Typography>
-                    <Select
-                        value={chapterCount === 0 ? "" : String(targetChapter)}
-                        onChange={(event) => onTargetChapterChange(Number(event.target.value))}
-                        disabled={chapterCount === 0 || attachLesson.isPending}
-                        sx={{ width: "100%", minHeight: 48, borderRadius: 999, bgcolor: "background.paper" }}
-                    >
-                        {Array.from({ length: chapterCount }).map((_, index) => (
-                            <MenuItem key={index} value={String(index)}>
-                                {t("dashboard.courses.builder.chapter_option", { number: index + 1 })}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </Box>
                 <Box>
                     <Typography sx={{ fontSize: 12, fontWeight: 700, mb: 0.75, color: "text.secondary" }}>
                         {t("dashboard.courses.builder.attach_placeholder")}

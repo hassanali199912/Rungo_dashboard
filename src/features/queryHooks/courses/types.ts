@@ -11,8 +11,12 @@ export type CourseSummary = {
     updatedAt?: string;
 };
 
+export type CourseListItem = CourseSummary & {
+    lessonCount: number;
+};
+
 export type CoursePage = {
-    items: CourseSummary[];
+    items: CourseListItem[];
     total: number;
     page: number;
     limit: number;

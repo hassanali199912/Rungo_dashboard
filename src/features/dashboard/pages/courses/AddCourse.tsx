@@ -36,7 +36,7 @@ function errorDetail(cause: unknown) {
 }
 
 function changedCardFields(
-    values: AddCourseValues,
+    values: Pick<AddCourseValues, "title" | "description" | "tags" | "coinPrice"> & { cover?: File },
     baseline: DefaultValues<AddCourseValues> | undefined,
 ): Omit<UpdateCourseInput, "courseId"> {
     const changes: Omit<UpdateCourseInput, "courseId"> = {};
@@ -79,19 +79,13 @@ function outlineToForm(course: CourseOutline): AddCourseValues {
     } as AddCourseValues;
 }
 
-function createDefaults(t: (key: string) => string): DefaultValues<AddCourseValues> {
+function createDefaults(): DefaultValues<AddCourseValues> {
     return {
         title: "",
         description: "",
         tags: [],
         coinPrice: 0,
-        chapters: [
-            {
-                id: crypto.randomUUID(),
-                title: t("dashboard.courses.builder.default_chapter"),
-                lessons: [],
-            },
-        ],
+        chapters: [],
     };
 }
 
@@ -161,13 +155,30 @@ function CourseForm({
 
     const methods = useForm<AddCourseValues>({
         resolver: (isEdit ? zodResolver(editCourseSchema) : zodResolver(addCourseSchema)) as Resolver<AddCourseValues>,
-        defaultValues: defaultValues ?? createDefaults(t),
+        defaultValues: defaultValues ?? createDefaults(),
     });
 
     const title = useWatch({ control: methods.control, name: "title" });
     const description = useWatch({ control: methods.control, name: "description" });
+    const tags = useWatch({ control: methods.control, name: "tags" });
     const coinPrice = useWatch({ control: methods.control, name: "coinPrice" });
+    const cover = useWatch({ control: methods.control, name: "cover" });
     const essentialsDone = [title, description].filter((value) => String(value ?? "").trim()).length;
+    const { defaultValues: savedCard } = methods.formState;
+    const cardChanged =
+        isEdit &&
+        Object.keys(
+            changedCardFields(
+                {
+                    title: title ?? "",
+                    description: description ?? "",
+                    tags: tags ?? [],
+                    coinPrice,
+                    cover: cover instanceof File ? cover : undefined,
+                },
+                savedCard,
+            ),
+        ).length > 0;
 
     const tagOptions = (tagsQuery.data ?? [])
         .filter((tag) => tag.isActive)
@@ -238,13 +249,17 @@ function CourseForm({
                                 variant: "outline",
                                 disabled: isSaving,
                             },
-                            {
-                                label: t("dashboard.courses.builder.save"),
-                                icon: SaveOutlined,
-                                variant: "outline",
-                                type: "submit",
-                                disabled: isSaving,
-                            },
+                            ...(cardChanged
+                                ? [
+                                    {
+                                        label: t("dashboard.courses.builder.save"),
+                                        icon: SaveOutlined,
+                                        variant: "outline" as const,
+                                        type: "submit" as const,
+                                        disabled: isSaving,
+                                    },
+                                ]
+                                : []),
                             published
                                 ? {
                                     label: t("dashboard.courses.builder.unpublish"),
@@ -281,7 +296,9 @@ function CourseForm({
                 <Box
                     sx={{
                         display: "grid",
-                        gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 0.92fr) minmax(0, 1.08fr)" },
+                        gridTemplateColumns: isEdit
+                            ? { xs: "1fr", lg: "minmax(0, 0.92fr) minmax(0, 1.08fr)" }
+                            : "2fr",
                         gap: 2.5,
                         alignItems: "start",
                     }}
@@ -346,7 +363,7 @@ function CourseForm({
                         </StudioCard>
                     </Box>
 
-                    <CurriculumBuilder courseId={courseId} />
+                    {isEdit ? <CurriculumBuilder courseId={courseId} /> : null}
                 </Box>
             </SectionWrapper>
         </FormWrapper>
