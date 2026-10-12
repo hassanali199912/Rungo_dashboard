@@ -254,6 +254,8 @@
         "x_placeholder": "https://x.com/your-name",
         "instagram": "Instagram",
         "instagram_placeholder": "https://instagram.com/your-name",
+        "bio": "Bio",
+        "bio_placeholder": "Tell learners what you teach",
         "save": "Save profile",
         "saved": "Profile updated."
       },
@@ -279,7 +281,15 @@
       },
       "errors": {
         "password_mismatch": "New passwords do not match.",
-        "password_same": "Choose a password different from the current one."
+        "password_same": "Choose a password different from the current one.",
+        "name_max": "Keep your name under 100 characters.",
+        "bio_max": "Keep the bio under 1000 characters.",
+        "avatar_size": "Profile photo must be 5MB or smaller.",
+        "avatar_type": "Use a JPG, PNG, or WebP image.",
+        "profile_load": "We could not load your profile.",
+        "profile_save": "We could not update your profile.",
+        "password_save": "We could not update your password.",
+        "password_current": "Current password is incorrect."
       }
     },
     "subscription": {

@@ -254,6 +254,8 @@
         "x_placeholder": "https://x.com/your-name",
         "instagram": "إنستغرام",
         "instagram_placeholder": "https://instagram.com/your-name",
+        "bio": "نبذة",
+        "bio_placeholder": "أخبر المتعلمين بما تدرّسه",
         "save": "حفظ الملف",
         "saved": "تم تحديث الملف الشخصي."
       },
@@ -279,7 +281,15 @@
       },
       "errors": {
         "password_mismatch": "كلمتا المرور الجديدتان غير متطابقتين.",
-        "password_same": "اختر كلمة مرور مختلفة عن الحالية."
+        "password_same": "اختر كلمة مرور مختلفة عن الحالية.",
+        "name_max": "أبقِ الاسم في 100 حرف أو أقل.",
+        "bio_max": "أبقِ النبذة في 1000 حرف أو أقل.",
+        "avatar_size": "يجب ألا تتجاوز صورة الملف 5MB.",
+        "avatar_type": "استخدم صورة JPG أو PNG أو WebP.",
+        "profile_load": "تعذر تحميل ملفك الشخصي.",
+        "profile_save": "تعذر تحديث ملفك الشخصي.",
+        "password_save": "تعذر تحديث كلمة المرور.",
+        "password_current": "كلمة المرور الحالية غير صحيحة."
       }
     },
     "subscription": {

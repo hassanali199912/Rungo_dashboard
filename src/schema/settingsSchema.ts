@@ -7,12 +7,29 @@ const optionalUrl = z
         message: "auth.errors.portfolio_invalid",
     });
 
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const avatarSchema = z
+    .union([
+        z
+            .custom<File>((value) => value instanceof File)
+            .refine((file) => file.size <= MAX_AVATAR_BYTES, "dashboard.settings.errors.avatar_size")
+            .refine((file) => AVATAR_TYPES.includes(file.type), "dashboard.settings.errors.avatar_type"),
+        z.string(),
+    ])
+    .optional();
+
 export const profileSettingsSchema = z.object({
-    avatar: z.custom<File>((value) => value instanceof File).optional(),
-    name: z.string().trim().min(2, "auth.errors.name_required"),
+    avatar: avatarSchema,
+    name: z
+        .string()
+        .trim()
+        .min(1, "auth.errors.name_required")
+        .max(100, "dashboard.settings.errors.name_max"),
     email: z.string().trim().min(1, "auth.errors.email_required").email("auth.errors.email_invalid"),
-    expertise: z.string().min(1, "auth.errors.expertise_required"),
-    portfolio: optionalUrl,
+    expertise: z.string(),
+    bio: z.string().trim().max(1000, "dashboard.settings.errors.bio_max"),
     linkedin: optionalUrl,
     github: optionalUrl,
     facebook: optionalUrl,

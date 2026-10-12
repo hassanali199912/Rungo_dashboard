@@ -7,13 +7,16 @@ import { useTranslation } from "react-i18next";
 import AppFormField from "@/components/form/AppFormField";
 import FormWrapper from "@/components/form/FormWrapper";
 import AppBtn from "@/components/ui/AppBtn";
-import { showSuccessToast } from "@/components/ui/appToast";
+import axios from "axios";
+import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
+import { useChangePassword } from "@/features/queryHooks/profile/useChangePassword";
 import { passwordSettingsSchema, type PasswordSettingsValues } from "@/schema";
 import { btnIconStartSx } from "@/styles/btnStyle";
 import StudioCard from "../../components/StudioCard";
 
 export default function PasswordSettingsCard() {
     const { t } = useTranslation();
+    const changePassword = useChangePassword();
 
     const methods = useForm<PasswordSettingsValues>({
         resolver: zodResolver(passwordSettingsSchema),
@@ -24,13 +27,26 @@ export default function PasswordSettingsCard() {
         },
     });
 
-    const onSubmit = () => {
-        methods.reset({
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-        });
-        showSuccessToast(t("dashboard.settings.password.saved"));
+    const onSubmit = async (values: PasswordSettingsValues) => {
+        try {
+            await changePassword.mutateAsync({
+                oldPassword: values.currentPassword,
+                newPassword: values.newPassword,
+            });
+            methods.reset({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
+            });
+            showSuccessToast(t("dashboard.settings.password.saved"));
+        } catch (cause) {
+            const message = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
+            const incorrect = typeof message === "string" && /current password/i.test(message);
+            showErrorToast(
+                t(incorrect ? "dashboard.settings.errors.password_current" : "dashboard.settings.errors.password_save"),
+                incorrect || typeof message !== "string" ? undefined : message,
+            );
+        }
     };
 
     return (
@@ -62,6 +78,7 @@ export default function PasswordSettingsCard() {
                         <AppBtn
                             type="submit"
                             customType="primary"
+                            disabled={changePassword.isPending}
                             startIcon={<SaveOutlined sx={btnIconStartSx} />}
                             sx={{ borderRadius: 999, px: 2.25, py: 1 }}
                         >
