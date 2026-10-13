@@ -195,6 +195,15 @@
     },
     "search": "ابحث في المقاطع والمحاضرات وسجل العملات...",
     "profile_name": "Prof",
+    "notifications": {
+      "label": "الإشعارات",
+      "title": "الإشعارات",
+      "mark_all": "تعليم الكل كمقروء",
+      "empty": "لا توجد إشعارات",
+      "load_failed": "تعذر تحميل الإشعارات",
+      "read_failed": "تعذر تحديث هذا الإشعار",
+      "mark_all_failed": "تعذر تعليم الإشعارات كمقروءة"
+    },
     "eyebrow": "استوديو المدرب الاحترافي",
     "welcome": "مرحبًا بعودتك، استوديو المدرب",
     "range_7": "7 أيام",
@@ -541,7 +550,6 @@
       "create_soon": "منشئ الدورات جاهز للمرحلة التالية في الاستوديو.",
       "stat_total": "إجمالي الدورات",
       "stat_published_drafts": "{{published}} منشورة · {{drafts}} مسودة",
-      "stat_lessons": "الدروس",
       "stat_enrollments": "التسجيلات",
       "stat_coins_earned": "العملات المكتسبة",
       "stat_total_delta": "+2 هذا الربع",

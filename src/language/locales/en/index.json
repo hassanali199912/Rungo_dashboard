@@ -195,6 +195,15 @@
     },
     "search": "Search shorts, lectures, coin logs...",
     "profile_name": "Prof",
+    "notifications": {
+      "label": "Notifications",
+      "title": "Notifications",
+      "mark_all": "Mark all read",
+      "empty": "No notifications",
+      "load_failed": "Could not load notifications",
+      "read_failed": "Could not update this notification",
+      "mark_all_failed": "Could not mark notifications as read"
+    },
     "eyebrow": "Creator Studio Pro",
     "welcome": "Welcome back, Creator Studio",
     "range_7": "7 Days",
@@ -541,7 +550,6 @@
       "create_soon": "Course builder is ready for the next studio pass.",
       "stat_total": "Total Courses",
       "stat_published_drafts": "{{published}} published · {{drafts}} drafts",
-      "stat_lessons": "Lessons",
       "stat_enrollments": "Enrollments",
       "stat_coins_earned": "Coins earned",
       "stat_total_delta": "+2 this quarter",

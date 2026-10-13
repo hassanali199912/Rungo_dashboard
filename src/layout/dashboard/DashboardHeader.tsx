@@ -12,7 +12,6 @@ import {
 import { alpha } from "@mui/material/styles";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import NotificationsNoneOutlined from "@mui/icons-material/NotificationsNoneOutlined";
 import SearchOutlined from "@mui/icons-material/SearchOutlined";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -21,6 +20,7 @@ import { useAuth } from "@/provider/AuthProvider";
 import { useLogoutHook as useLogout } from "@/provider/useLogout";
 import { isAdminRole } from "@/shared/auth/roles";
 import DashboardBreadcrumbs from "./DashboardBreadcrumbs";
+import NotificationBell from "./NotificationBell";
 
 interface UserHeaderProps {
     onMenuClick?: () => void;
@@ -97,9 +97,7 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <LanguageSwitcher variant="inline" />
-                    <IconButton sx={{ color: "text.secondary" }}>
-                        <NotificationsNoneOutlined />
-                    </IconButton>
+                    {!isAdmin ? <NotificationBell /> : null}
                     <IconButton
                         onClick={openProfile}
                         sx={{
