@@ -17,7 +17,6 @@ import EditOutlined from "@mui/icons-material/EditOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import NorthEast from "@mui/icons-material/NorthEast";
-import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
 import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
 import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
 import axios from "axios";
@@ -277,7 +276,6 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
                     <MenuItem onClick={handleEdit}>{t("dashboard.shorts.action_edit")}</MenuItem>
-                    <MenuItem onClick={closeMenu}>{t("dashboard.shorts.action_stats")}</MenuItem>
                     {typeof item.isActive === "boolean" && (
                         <MenuItem onClick={handleToggleActive} disabled={toggleActive.isPending}>
                             {t(
@@ -350,23 +348,6 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                     ]}
                 >
                     {t("dashboard.shorts.action_edit")}
-                </Button>
-                <Button
-                    startIcon={<ShowChartOutlined sx={btnIconStartSx} />}
-                    sx={[
-                        btnIconSlotReset,
-                        {
-                            flex: 1,
-                            borderRadius: 999,
-                            bgcolor: "surface.main",
-                            color: "text.primary",
-                            fontWeight: 700,
-                            textTransform: "none",
-                            "&:hover": { bgcolor: "surface.dark" },
-                        },
-                    ]}
-                >
-                    {t("dashboard.shorts.action_stats")}
                 </Button>
             </Box>
 

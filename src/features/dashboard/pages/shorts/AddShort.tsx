@@ -1,7 +1,6 @@
 import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
 import IosShareOutlined from "@mui/icons-material/IosShareOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import SmartphoneOutlined from "@mui/icons-material/SmartphoneOutlined";
 import { Box, Button, CircularProgress, LinearProgress, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState, type ReactNode } from "react";
@@ -102,9 +101,8 @@ export default function AddShort() {
         },
     });
 
-    const title = useWatch({ control: methods.control, name: "title" });
+    const description = useWatch({ control: methods.control, name: "summary" });
     const video = useWatch({ control: methods.control, name: "video" });
-    const creatorName = user?.name || t("dashboard.profile_name");
 
     useEffect(() => {
         if (!shortQuery.data) return;
@@ -309,8 +307,11 @@ export default function AddShort() {
                         subtitle={t("dashboard.shorts.publisher.preview_subtitle")}
                     >
                         <ShortFeedPreview
-                            title={title}
-                            creatorName={creatorName}
+                            authorName={user?.name || t("dashboard.profile_name")}
+                            description={description ?? ""}
+                            likes={isEdit ? (shortQuery.data?.likeCount ?? 0) : 0}
+                            comments={isEdit ? (shortQuery.data?.commentCount ?? 0) : 0}
+                            shares={isEdit ? (shortQuery.data?.shareCount ?? 0) : 0}
                             video={video}
                             existingVideoUrl={existingVideoUrl}
                         />
@@ -418,14 +419,6 @@ export default function AddShort() {
                         {t("dashboard.shorts.publisher.autosave")}
                     </Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                        <AppBtn
-                            customType="outline"
-                            type="button"
-                            startIcon={<SmartphoneOutlined sx={btnIconStartSx} />}
-                            sx={{ borderRadius: 999 }}
-                        >
-                            {t("dashboard.shorts.publisher.preview_student")}
-                        </AppBtn>
                         <AppBtn
                             customType="primary"
                             type="submit"
