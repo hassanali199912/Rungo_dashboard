@@ -38,6 +38,7 @@ export function useCreateCourse() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: courseKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: courseKeys.statistics() });
         },
     });
 }

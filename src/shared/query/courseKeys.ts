@@ -11,4 +11,5 @@ export const courseKeys = {
     list: (params: CourseListParams) => [...courseKeys.lists(), params] as const,
     details: () => [...courseKeys.all, "detail"] as const,
     detail: (id: string) => [...courseKeys.details(), id] as const,
+    statistics: () => [...courseKeys.all, "statistics"] as const,
 };

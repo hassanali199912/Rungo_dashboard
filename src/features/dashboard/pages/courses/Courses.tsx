@@ -6,6 +6,7 @@ import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import ShowChartOutlined from "@mui/icons-material/ShowChartOutlined";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useCourseStatistics } from "@/features/queryHooks/courses/useCourseStatistics";
 import { useMyCourses } from "@/features/queryHooks/courses/useMyCourses";
 import ContentFilterBar from "../../components/ContentFilterBar";
 import { defaultContentFilter, type ContentFilterState } from "../../components/contentFilter.types";
@@ -40,6 +41,8 @@ export default function Courses() {
         sort: "enrollments",
     });
     const coursesQuery = useMyCourses(COURSE_PARAMS);
+    const statisticsQuery = useCourseStatistics();
+    const statistics = statisticsQuery.data;
 
     const courses = useMemo<CourseItem[]>(
         () =>
@@ -74,34 +77,34 @@ export default function Courses() {
         {
             key: "total",
             label: t("dashboard.courses.stat_total"),
-            value: "12",
+            value: statistics ? statistics.totalCourses.toLocaleString() : "—",
             icon: MenuBookOutlined,
-            delta: t("dashboard.courses.stat_total_delta"),
-            description: t("dashboard.courses.stat_total_hint"),
+            description: statistics
+                ? t("dashboard.courses.stat_published_drafts", {
+                      published: statistics.publishedCourses.toLocaleString(),
+                      drafts: statistics.draftCourses.toLocaleString(),
+                  })
+                : undefined,
         },
         {
-            key: "students",
-            label: t("dashboard.courses.stat_active_students"),
-            value: "24,850",
+            key: "lessons",
+            label: t("dashboard.courses.stat_lessons"),
+            value: statistics ? statistics.totalLessons.toLocaleString() : "—",
+            icon: PlayArrowOutlined,
+        },
+        {
+            key: "enrollments",
+            label: t("dashboard.courses.stat_enrollments"),
+            value: statistics ? statistics.totalEnrollments.toLocaleString() : "—",
             icon: GroupsOutlined,
             iconTone: "tertiary",
-            delta: t("dashboard.courses.stat_students_delta"),
-            meter: { value: 72, label: t("dashboard.courses.stat_students_hint") },
         },
         {
-            key: "completion",
-            label: t("dashboard.courses.stat_avg_completion"),
-            value: "72.4%",
+            key: "coins",
+            label: t("dashboard.courses.stat_coins_earned"),
+            value: statistics ? statistics.totalCoinsEarned.toLocaleString() : "—",
+            unit: t("dashboard.coins"),
             icon: ShowChartOutlined,
-            delta: t("dashboard.courses.stat_completion_delta"),
-            description: t("dashboard.courses.stat_completion_hint"),
-        },
-        {
-            key: "shorts",
-            label: t("dashboard.courses.stat_linked"),
-            value: "148",
-            icon: PlayArrowOutlined,
-            description: t("dashboard.courses.stat_linked_hint"),
         },
     ];
 
@@ -115,7 +118,7 @@ export default function Courses() {
                 to: "/dashboard/courses/new",
             }}
         >
-            <StatisticCards items={stats} />
+            <StatisticCards items={stats} loading={statisticsQuery.isPending} />
 
             <Box sx={{ marginBlock: 8 }}>
                 <ContentFilterBar

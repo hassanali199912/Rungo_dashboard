@@ -38,6 +38,7 @@ export function useAddLessonVideo() {
         },
         onSuccess: (_data, input) => {
             queryClient.invalidateQueries({ queryKey: courseKeys.detail(input.courseId) });
+            queryClient.invalidateQueries({ queryKey: courseKeys.statistics() });
         },
     });
 }
