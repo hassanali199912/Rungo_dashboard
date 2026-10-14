@@ -8,4 +8,5 @@ export const instructorSubscriptionKeys = {
     mineAll: () => [...instructorSubscriptionKeys.all, "me-all"] as const,
     details: () => [...instructorSubscriptionKeys.all, "detail"] as const,
     detail: (id: string) => [...instructorSubscriptionKeys.details(), id] as const,
+    planName: (userId: string) => [...instructorSubscriptionKeys.all, "plan-name", userId] as const,
 };

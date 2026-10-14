@@ -1,6 +1,6 @@
 import { Box, CircularProgress, Tab, Tabs, Typography } from "@mui/material";
 import axios from "axios";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import AppFormField from "@/components/form/AppFormField";
@@ -15,11 +15,12 @@ import { useCreateCoinPackage } from "@/features/queryHooks/coinPackages/useCrea
 import { useDeleteCoinPackage } from "@/features/queryHooks/coinPackages/useDeleteCoinPackage";
 import { useUpdateCoinPackage } from "@/features/queryHooks/coinPackages/useUpdateCoinPackage";
 import type { CoinPackage, CoinPackageInput } from "@/features/queryHooks/coinPackages/types";
+import { useAdminInvoice } from "@/features/queryHooks/admin/useAdminInvoice";
+import { useAdminInvoices } from "@/features/queryHooks/admin/useAdminInvoices";
+import { useRefundAdminInvoice } from "@/features/queryHooks/admin/useRefundAdminInvoice";
+import type { AdminInvoice, PaymentStatus } from "@/features/queryHooks/admin/types";
 import AdminViewDialog, { DetailRow } from "../../components/AdminViewDialog";
 import StatusBadge from "../../components/StatusBadge";
-import { markInvoiceRefunded } from "../../data/adminStore";
-import type { CoinInvoice } from "../../data/adminTypes";
-import { getMockInvoices } from "../../data/mockInvoices";
 
 const TEMP_COIN_PACKAGE: CoinPackageInput = {
     name: "New package",
@@ -36,7 +37,15 @@ function apiErrorDetail(cause: unknown) {
     return typeof message === "string" ? message : undefined;
 }
 
+const PAGE_LIMIT = 20;
+
 type InvoiceTab = "packs" | "purchases";
+
+function invoiceBadgeStatus(status: PaymentStatus): "paid" | "hidden" | "refunded" {
+    if (status === "completed") return "paid";
+    if (status === "pending") return "hidden";
+    return "refunded";
+}
 
 type PackFormValues = {
     name: string;
@@ -47,25 +56,32 @@ type PackFormValues = {
 };
 
 export default function AdminInvoices() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [tab, setTab] = useState<InvoiceTab>("packs");
     const [filter, setFilter] = useState<ContentFilterState>(defaultContentFilter);
-    const [tick, setTick] = useState(0);
+    const [page, setPage] = useState(1);
+    const [viewingId, setViewingId] = useState<string | null>(null);
     const packagesQuery = useAdminCoinPackages();
+    const invoicesQuery = useAdminInvoices({ page, limit: PAGE_LIMIT }, tab === "purchases");
+    const invoiceQuery = useAdminInvoice(viewingId ?? undefined);
+    const refundInvoice = useRefundAdminInvoice();
     const createPackage = useCreateCoinPackage();
     const updatePackage = useUpdateCoinPackage();
     const deletePackage = useDeleteCoinPackage();
-    const [viewing, setViewing] = useState<CoinInvoice | null>(null);
     const [editingPack, setEditingPack] = useState<CoinPackage | null>(null);
     const editMethods = useForm<PackFormValues>({
         defaultValues: { name: "", coins: 100, price: 0, currency: "EGP", isActive: true },
     });
-    const invoices = useMemo(() => getMockInvoices(), [tick]);
+    const invoicePage = invoicesQuery.data;
+    const invoices = invoicePage && Array.isArray(invoicePage.items) ? invoicePage.items : [];
+    const invalidInvoices = invoicesQuery.isSuccess && (!invoicePage || !Array.isArray(invoicePage.items));
+    const invoiceTotal = invoicePage?.total ?? 0;
     const packages = Array.isArray(packagesQuery.data) ? packagesQuery.data : [];
 
     const visible = invoices.filter((row) => {
         const q = filter.query.trim().toLowerCase();
-        const matchesQuery = !q || row.id.toLowerCase().includes(q) || row.studentName.toLowerCase().includes(q);
+        const name = (row.displayName || row.email || "").toLowerCase();
+        const matchesQuery = !q || row.id.toLowerCase().includes(q) || name.includes(q) || (row.email ?? "").toLowerCase().includes(q);
         const matchesStatus = filter.status === "all" || row.status === filter.status;
         return matchesQuery && matchesStatus;
     });
@@ -128,11 +144,22 @@ export default function AdminInvoices() {
         }
     };
 
-    const refund = (id: string) => {
-        markInvoiceRefunded(id);
-        setTick((value) => value + 1);
-        showSuccessToast(t("admin.invoices.refunded_toast"));
+    const refund = async (id: string) => {
+        if (refundInvoice.isPending) return;
+        try {
+            await refundInvoice.mutateAsync(id);
+            showSuccessToast(t("admin.invoices.refunded_toast"));
+        } catch (cause) {
+            showErrorToast(t("admin.invoices.refund_failed"), apiErrorDetail(cause));
+        }
     };
+
+    const invoiceStatusLabel = (status: PaymentStatus) => t(`admin.invoices.status_${status}`);
+
+    const invoiceTypeLabel = (row: AdminInvoice) => t(`admin.invoices.type_${row.type}`);
+
+    const personLabel = (row: Pick<AdminInvoice, "displayName" | "email">) =>
+        row.displayName || row.email || t("admin.instructors.not_set");
 
     return (
         <SectionWrapper title={t("admin.invoices.page_title")} description={t("admin.invoices.page_description")}>
@@ -261,68 +288,144 @@ export default function AdminInvoices() {
                         sortOptions={[{ value: "plays", label: t("admin.people.all") }]}
                         statusOptions={[
                             { value: "all", label: t("admin.people.all"), count: invoices.length },
-                            { value: "paid", label: t("admin.invoices.paid"), count: invoices.filter((row) => row.status === "paid").length },
+                            {
+                                value: "completed",
+                                label: t("admin.invoices.status_completed"),
+                                count: invoices.filter((row) => row.status === "completed").length,
+                            },
                             {
                                 value: "refunded",
-                                label: t("admin.invoices.refunded"),
+                                label: t("admin.invoices.status_refunded"),
                                 count: invoices.filter((row) => row.status === "refunded").length,
+                            },
+                            {
+                                value: "pending",
+                                label: t("admin.invoices.status_pending"),
+                                count: invoices.filter((row) => row.status === "pending").length,
+                            },
+                            {
+                                value: "failed",
+                                label: t("admin.invoices.status_failed"),
+                                count: invoices.filter((row) => row.status === "failed").length,
                             },
                         ]}
                     />
 
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mt: 2 }}>
-                        {visible.map((row) => (
-                            <Box
-                                key={row.id}
-                                sx={{
-                                    display: "grid",
-                                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 0.8fr 0.8fr auto" },
-                                    gap: 1.5,
-                                    alignItems: "center",
-                                    bgcolor: "surface.main",
-                                    borderRadius: "1rem",
-                                    p: 2,
-                                }}
-                            >
-                                <Box>
-                                    <Typography sx={{ fontWeight: 700 }}>{row.id}</Typography>
-                                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{row.studentName}</Typography>
-                                </Box>
-                                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                                    {row.coins} {t("dashboard.coins")} · ${row.amount.toFixed(2)}
-                                </Typography>
-                                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{row.date}</Typography>
-                                <StatusBadge status={row.status} label={t(`admin.invoices.${row.status}`)} />
-                                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                                    <AppBtn customType="outline" type="button" onClick={() => setViewing(row)} sx={{ borderRadius: 999 }}>
-                                        {t("admin.people.view")}
-                                    </AppBtn>
+                    {invoicesQuery.isPending ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                            <CircularProgress aria-label={t("status.loading")} />
+                        </Box>
+                    ) : invoicesQuery.isError || invalidInvoices ? (
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, py: 6 }}>
+                            <Typography sx={{ color: "error.main", textAlign: "center" }}>{t("admin.invoices.load_failed")}</Typography>
+                            <AppBtn customType="primary" type="button" onClick={() => invoicesQuery.refetch()} sx={{ borderRadius: 999 }}>
+                                {t("status.retry")}
+                            </AppBtn>
+                        </Box>
+                    ) : (
+                        <>
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mt: 2 }}>
+                                {visible.length === 0 ? (
+                                    <Typography sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+                                        {t("admin.people.empty")}
+                                    </Typography>
+                                ) : (
+                                    visible.map((row) => {
+                                        const date = new Date(row.createdAt);
+                                        const when = Number.isNaN(date.getTime()) ? row.createdAt : date.toLocaleDateString(i18n.language);
+                                        return (
+                                            <Box
+                                                key={row.id}
+                                                sx={{
+                                                    display: "grid",
+                                                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 0.8fr 0.8fr auto" },
+                                                    gap: 1.5,
+                                                    alignItems: "center",
+                                                    bgcolor: "surface.main",
+                                                    borderRadius: "1rem",
+                                                    p: 2,
+                                                }}
+                                            >
+                                                <Box>
+                                                    <Typography sx={{ fontWeight: 700 }}>{personLabel(row)}</Typography>
+                                                    <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{row.email || row.id}</Typography>
+                                                </Box>
+                                                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{invoiceTypeLabel(row)}</Typography>
+                                                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                                                    {row.amount} {row.currency} · {when}
+                                                </Typography>
+                                                <StatusBadge status={invoiceBadgeStatus(row.status)} label={invoiceStatusLabel(row.status)} />
+                                                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                                                    <AppBtn customType="outline" type="button" onClick={() => setViewingId(row.id)} sx={{ borderRadius: 999 }}>
+                                                        {t("admin.people.view")}
+                                                    </AppBtn>
+                                                    <AppBtn
+                                                        customType="primary"
+                                                        type="button"
+                                                        disabled={row.status !== "completed" || refundInvoice.isPending}
+                                                        onClick={() => refund(row.id)}
+                                                        sx={{ borderRadius: 999 }}
+                                                    >
+                                                        {t("admin.invoices.mark_refunded")}
+                                                    </AppBtn>
+                                                </Box>
+                                            </Box>
+                                        );
+                                    })
+                                )}
+                            </Box>
+                            {invoiceTotal > PAGE_LIMIT ? (
+                                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
                                     <AppBtn
-                                        customType="primary"
+                                        customType="outline"
                                         type="button"
-                                        disabled={row.status === "refunded"}
-                                        onClick={() => refund(row.id)}
+                                        disabled={page <= 1}
+                                        onClick={() => setPage((current) => Math.max(1, current - 1))}
                                         sx={{ borderRadius: 999 }}
                                     >
-                                        {t("admin.invoices.mark_refunded")}
+                                        {t("admin.people.previous")}
+                                    </AppBtn>
+                                    <AppBtn
+                                        customType="outline"
+                                        type="button"
+                                        disabled={page * PAGE_LIMIT >= invoiceTotal}
+                                        onClick={() => setPage((current) => current + 1)}
+                                        sx={{ borderRadius: 999 }}
+                                    >
+                                        {t("admin.people.next")}
                                     </AppBtn>
                                 </Box>
-                            </Box>
-                        ))}
-                    </Box>
+                            ) : null}
+                        </>
+                    )}
                 </Box>
             )}
 
-            <AdminViewDialog open={Boolean(viewing)} title={viewing?.id ?? ""} onClose={() => setViewing(null)}>
-                {viewing ? (
+            <AdminViewDialog open={Boolean(viewingId)} title={invoiceQuery.data?.id ?? viewingId ?? ""} onClose={() => setViewingId(null)}>
+                {invoiceQuery.isPending ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                        <CircularProgress size={22} aria-label={t("status.loading")} />
+                    </Box>
+                ) : invoiceQuery.isError || !invoiceQuery.data ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1.5 }}>
+                        <Typography sx={{ color: "error.main" }}>{t("admin.invoices.load_failed")}</Typography>
+                        <AppBtn customType="outline" type="button" onClick={() => invoiceQuery.refetch()} sx={{ borderRadius: 999 }}>
+                            {t("status.retry")}
+                        </AppBtn>
+                    </Box>
+                ) : (
                     <>
-                        <DetailRow label={t("admin.invoices.student")} value={viewing.studentName} />
-                        <DetailRow label={t("admin.invoices.pack")} value={`${viewing.coins} ${t("dashboard.coins")}`} />
-                        <DetailRow label={t("admin.invoices.amount")} value={`$${viewing.amount.toFixed(2)}`} />
-                        <DetailRow label={t("admin.invoices.date")} value={viewing.date} />
-                        <DetailRow label={t("admin.invoices.status")} value={t(`admin.invoices.${viewing.status}`)} />
+                        <DetailRow label={t("admin.invoices.student")} value={personLabel(invoiceQuery.data)} />
+                        <DetailRow label={t("admin.invoices.type")} value={invoiceTypeLabel(invoiceQuery.data)} />
+                        <DetailRow label={t("admin.invoices.reference")} value={invoiceQuery.data.referenceId} />
+                        <DetailRow label={t("admin.invoices.amount")} value={`${invoiceQuery.data.amount} ${invoiceQuery.data.currency}`} />
+                        <DetailRow
+                            label={t("admin.invoices.date")}
+                            value={new Date(invoiceQuery.data.createdAt).toLocaleDateString(i18n.language)}
+                        />
+                        <DetailRow label={t("admin.invoices.status")} value={invoiceStatusLabel(invoiceQuery.data.status)} />
                     </>
-                ) : null}
+                )}
             </AdminViewDialog>
 
             <AdminViewDialog open={Boolean(editingPack)} title={t("admin.invoices.edit_pack")} onClose={() => setEditingPack(null)}>

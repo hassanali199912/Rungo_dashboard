@@ -810,6 +810,8 @@
       "activated": "تم تفعيل الحساب.",
       "empty": "لا توجد سجلات تطابق هذه الفلاتر.",
       "back": "العودة إلى القائمة",
+      "previous": "السابق",
+      "next": "التالي",
       "close": "إغلاق"
     },
     "instructors": {
@@ -834,6 +836,11 @@
       "description": "حسابات المتعلمين وأرصدة العملات وسجل المشتريات.",
       "search": "ابحث عن الطلاب بالاسم أو البريد",
       "col_last_purchase": "آخر شراء",
+      "no_purchase": "—",
+      "purchase_pending": "قيد الانتظار",
+      "purchase_completed": "مكتمل",
+      "purchase_failed": "فشل",
+      "load_failed": "تعذر تحميل الطلاب.",
       "invoices_title": "سجل الفواتير",
       "invoices_subtitle": "حزم العملات التي اشتراها هذا المتعلم."
     },
@@ -845,8 +852,10 @@
       "col_lessons": "الدروس",
       "col_price": "السعر",
       "price_coins": "{{count}} عملة",
+      "publish_failed": "تعذر تحديث ظهور الدورة.",
       "detail": {
         "stat_students": "الطلاب المسجّلون",
+        "stats_failed": "تعذر تحميل إحصاءات الدورة.",
         "stat_lessons": "الدروس",
         "stat_price": "السعر",
         "stat_completion": "الإكمال",
@@ -1007,6 +1016,16 @@
       "pack_updated": "تم تحديث حزمة العملات.",
       "paid": "مدفوعة",
       "refunded": "مستردة",
+      "status_pending": "قيد الانتظار",
+      "status_completed": "مكتمل",
+      "status_failed": "فشل",
+      "status_refunded": "مستردة",
+      "type_coin_purchase": "شراء عملات",
+      "type_instructor_subscription": "اشتراك مدرب",
+      "type": "النوع",
+      "reference": "المرجع",
+      "load_failed": "تعذر تحميل الفواتير.",
+      "refund_failed": "تعذر استرداد هذه الفاتورة.",
       "mark_refunded": "تعليم كمسترد",
       "refunded_toast": "تم تعليم الفاتورة كمستردة.",
       "student": "الطالب",
@@ -1026,7 +1045,10 @@
         "usd_per_coin": "تلميح الدولار لكل عملة",
         "maintenance": "وضع الصيانة",
         "save": "حفظ المنصة",
-        "saved": "تم حفظ إعدادات المنصة."
+        "saved": "تم حفظ إعدادات المنصة.",
+        "load_failed": "تعذر تحميل إعدادات المنصة.",
+        "save_failed": "تعذر حفظ إعدادات المنصة.",
+        "invalid": "أدخل بريدًا صحيحًا، ونسبة من 0 إلى 100، وقيمة بالدولار لا تقل عن 0."
       }
     }
   },

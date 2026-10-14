@@ -13,6 +13,7 @@ import AppBtn from "@/components/ui/AppBtn";
 import { showSuccessToast } from "@/components/ui/appToast";
 import SectionWrapper from "@/features/dashboard/components/SectionWrapper";
 import StudioCard from "@/features/dashboard/components/StudioCard";
+import { useCourseDetailStatistics } from "@/features/queryHooks/courses/useCourseDetailStatistics";
 import LessonPreviewModal from "../../components/LessonPreviewModal";
 import StatusBadge from "../../components/StatusBadge";
 import { toggleHidden } from "../../data/adminStore";
@@ -53,9 +54,99 @@ export default function AdminCourseDetail() {
     const [openChapter, setOpenChapter] = useState(0);
     const [preview, setPreview] = useState<AdminCourseLesson | null>(null);
     const course = useMemo(() => (id ? getMockAdminCourseDetail(id, t) : null), [id, t, tick]);
+    const statsQuery = useCourseDetailStatistics(id);
+    const enrollmentValue = statsQuery.isPending
+        ? t("status.loading")
+        : statsQuery.isError
+          ? t("admin.courses.detail.stats_failed")
+          : (statsQuery.data?.enrollmentCount ?? 0).toLocaleString();
+    const coinsEarnedValue = statsQuery.isPending
+        ? t("status.loading")
+        : statsQuery.isError
+          ? t("admin.courses.detail.stats_failed")
+          : `${(statsQuery.data?.coinsEarned ?? 0).toLocaleString()} ${t("dashboard.coins")}`;
+
+    if (!id) {
+        return <Navigate to="/admin/courses" replace />;
+    }
 
     if (!course) {
-        return <Navigate to="/admin/courses" replace />;
+        const liveStats = [
+            {
+                icon: GroupsOutlined,
+                label: t("admin.courses.detail.stat_students"),
+                value: enrollmentValue,
+                unit: t("admin.overview.learners"),
+            },
+            {
+                icon: PaymentsOutlined,
+                label: t("dashboard.coins"),
+                value: coinsEarnedValue,
+                unit: t("dashboard.coins"),
+            },
+        ];
+
+        return (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <SectionWrapper title={t("admin.courses.title")}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 2.5 }}>
+                        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{coinsEarnedValue}</Typography>
+                        {statsQuery.isError ? (
+                            <AppBtn customType="outline" type="button" onClick={() => statsQuery.refetch()} sx={{ borderRadius: 999 }}>
+                                {t("status.retry")}
+                            </AppBtn>
+                        ) : null}
+                    </Box>
+                    <Box
+                        sx={{
+                            display: "grid",
+                            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                            gap: 1.5,
+                        }}
+                    >
+                        {liveStats.map((stat) => {
+                            const Icon = stat.icon;
+                            return (
+                                <Box
+                                    key={stat.label}
+                                    sx={{
+                                        bgcolor: "surface.main",
+                                        borderRadius: "1rem",
+                                        p: 2,
+                                        minHeight: 112,
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: 1,
+                                    }}
+                                >
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Box
+                                            sx={{
+                                                width: 34,
+                                                height: 34,
+                                                borderRadius: "50%",
+                                                bgcolor: "background.paper",
+                                                display: "grid",
+                                                placeItems: "center",
+                                                color: "text.secondary",
+                                            }}
+                                        >
+                                            <Icon sx={{ fontSize: 18 }} />
+                                        </Box>
+                                        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 700 }}>{stat.unit}</Typography>
+                                    </Box>
+                                    <Typography sx={{ fontSize: 13, color: "text.secondary", fontWeight: 600 }}>{stat.label}</Typography>
+                                    <Typography sx={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em" }}>{stat.value}</Typography>
+                                </Box>
+                            );
+                        })}
+                    </Box>
+                </SectionWrapper>
+                <AppBtn customType="outline" to="/admin/courses" sx={{ borderRadius: 999, alignSelf: "flex-start" }}>
+                    {t("admin.people.back")}
+                </AppBtn>
+            </Box>
+        );
     }
 
     const hide = () => {
@@ -68,7 +159,7 @@ export default function AdminCourseDetail() {
         {
             icon: GroupsOutlined,
             label: t("admin.courses.detail.stat_students"),
-            value: course.students.toLocaleString(),
+            value: enrollmentValue,
             unit: t("admin.overview.learners"),
         },
         {
@@ -109,8 +200,13 @@ export default function AdminCourseDetail() {
                         label={course.hidden ? t("admin.content.hidden_status") : t("admin.content.visible")}
                     />
                     <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                        {course.duration} · {course.revenueCoins.toLocaleString()} {t("dashboard.coins")}
+                        {course.duration} · {coinsEarnedValue}
                     </Typography>
+                    {statsQuery.isError ? (
+                        <AppBtn customType="outline" type="button" onClick={() => statsQuery.refetch()} sx={{ borderRadius: 999 }}>
+                            {t("status.retry")}
+                        </AppBtn>
+                    ) : null}
                 </Box>
 
                 <Box

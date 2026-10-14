@@ -3,6 +3,7 @@ import { QUERY_ROOT } from "./queryKeys";
 export type CourseListParams = {
     page: number;
     limit: number;
+    instructorUserId?: string;
 };
 
 export const courseKeys = {
@@ -12,4 +13,5 @@ export const courseKeys = {
     details: () => [...courseKeys.all, "detail"] as const,
     detail: (id: string) => [...courseKeys.details(), id] as const,
     statistics: () => [...courseKeys.all, "statistics"] as const,
+    detailStatistics: (id: string) => [...courseKeys.all, "detail-statistics", id] as const,
 };

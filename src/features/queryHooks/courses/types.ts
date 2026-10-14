@@ -40,3 +40,8 @@ export type CourseChapterOutline = {
 export type CourseOutline = CourseSummary & {
     chapters: CourseChapterOutline[];
 };
+
+export type CourseDetailStatistics = {
+    enrollmentCount: number;
+    coinsEarned: number;
+};

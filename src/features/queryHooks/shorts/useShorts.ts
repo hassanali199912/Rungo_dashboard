@@ -13,6 +13,7 @@ export type Short = {
     likeCount: number;
     commentCount: number;
     shareCount: number;
+    courseId: string | null;
     isActive: boolean;
     publishedAt: string | null;
     createdAt: string;
@@ -42,10 +43,11 @@ export async function fetchShorts(params: ShortsListParams) {
     return data;
 }
 
-export function useShorts(params: ShortsListParams) {
+export function useShorts(params: ShortsListParams, enabled = true) {
     return useQuery({
         queryKey: shortsKeys.list(params),
         queryFn: () => fetchShorts(params),
+        enabled,
         placeholderData: (previousData) => previousData,
     });
 }

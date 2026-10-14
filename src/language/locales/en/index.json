@@ -810,6 +810,8 @@
       "activated": "Account activated.",
       "empty": "No records match these filters.",
       "back": "Back to list",
+      "previous": "Previous",
+      "next": "Next",
       "close": "Close"
     },
     "instructors": {
@@ -834,6 +836,11 @@
       "description": "Learner accounts, coin balances, and purchase history.",
       "search": "Search students by name or email",
       "col_last_purchase": "Last purchase",
+      "no_purchase": "—",
+      "purchase_pending": "Pending",
+      "purchase_completed": "Completed",
+      "purchase_failed": "Failed",
+      "load_failed": "Could not load students.",
       "invoices_title": "Invoice history",
       "invoices_subtitle": "Coin packs this learner has purchased."
     },
@@ -845,8 +852,10 @@
       "col_lessons": "Lessons",
       "col_price": "Price",
       "price_coins": "{{count}} coins",
+      "publish_failed": "Could not update course visibility.",
       "detail": {
         "stat_students": "Students enrolled",
+        "stats_failed": "Could not load course stats.",
         "stat_lessons": "Lessons",
         "stat_price": "Price",
         "stat_completion": "Completion",
@@ -1007,6 +1016,16 @@
       "pack_updated": "Coin pack updated.",
       "paid": "Paid",
       "refunded": "Refunded",
+      "status_pending": "Pending",
+      "status_completed": "Completed",
+      "status_failed": "Failed",
+      "status_refunded": "Refunded",
+      "type_coin_purchase": "Coin purchase",
+      "type_instructor_subscription": "Instructor subscription",
+      "type": "Type",
+      "reference": "Reference",
+      "load_failed": "Could not load invoices.",
+      "refund_failed": "Could not refund this invoice.",
       "mark_refunded": "Mark refunded",
       "refunded_toast": "Invoice marked refunded.",
       "student": "Student",
@@ -1026,7 +1045,10 @@
         "usd_per_coin": "USD per coin hint",
         "maintenance": "Maintenance mode",
         "save": "Save platform",
-        "saved": "Platform settings saved."
+        "saved": "Platform settings saved.",
+        "load_failed": "Could not load platform settings.",
+        "save_failed": "Could not save platform settings.",
+        "invalid": "Enter a valid email, a split from 0 to 100, and a USD amount of 0 or more."
       }
     }
   },

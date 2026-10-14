@@ -3,6 +3,8 @@ import { QUERY_ROOT } from "./queryKeys";
 export type ShortsListParams = {
     page: number;
     limit: number;
+    instructorUserId?: string;
+    feedOnly?: boolean;
 };
 
 export const shortsKeys = {
