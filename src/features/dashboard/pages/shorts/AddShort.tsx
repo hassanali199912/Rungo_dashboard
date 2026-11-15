@@ -19,6 +19,7 @@ import { useShort } from "@/features/queryHooks/shorts/useShort";
 import { useUpdateShort } from "@/features/queryHooks/shorts/useUpdateShort";
 import { useAuth } from "@/provider/AuthProvider";
 import { updateShortSchema, type UpdateShortValues } from "@/schema";
+import { inspectShortVideoDuration } from "@/shared/media/videoDuration";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import SectionWrapper from "../../components/SectionWrapper";
 import ShortFeedPreview from "../../components/shorts/ShortFeedPreview";
@@ -88,7 +89,9 @@ export default function AddShort() {
     const createShort = useCreateShort();
     const updateShort = useUpdateShort();
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [checkingVideo, setCheckingVideo] = useState(false);
     const isSaving = createShort.isPending || updateShort.isPending;
+    const isBusy = isSaving || checkingVideo;
 
     const methods = useForm<UpdateShortValues>({
         resolver: zodResolver(updateShortSchema),
@@ -278,7 +281,7 @@ export default function AddShort() {
                                   icon: SaveOutlined,
                                   variant: "outline" as const,
                                   onClick: saveDraft,
-                                  disabled: isSaving,
+                                  disabled: isBusy,
                               },
                           ]),
                     {
@@ -289,7 +292,7 @@ export default function AddShort() {
                         ),
                         icon: isEdit ? SaveOutlined : IosShareOutlined,
                         type: "submit",
-                        disabled: isSaving,
+                        disabled: isBusy,
                     },
                 ]}
             >
@@ -338,6 +341,15 @@ export default function AddShort() {
                                 replaceLabel={t("dashboard.shorts.publisher.replace")}
                                 accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
                                 existingMediaUrl={existingVideoUrl}
+                                uploadPendingLabel={t("dashboard.shorts.publisher.checking_duration")}
+                                onUploadPendingChange={setCheckingVideo}
+                                validateFile={async (file) => {
+                                    const result = await inspectShortVideoDuration(file);
+                                    if (result.ok) return null;
+                                    return result.issue === "unreadable"
+                                        ? "dashboard.shorts.publisher.errors.video_duration_unreadable"
+                                        : "dashboard.shorts.publisher.errors.video_duration";
+                                }}
                             />
                         </PublisherCard>
 
@@ -422,7 +434,7 @@ export default function AddShort() {
                         <AppBtn
                             customType="primary"
                             type="submit"
-                            disabled={isSaving}
+                            disabled={isBusy}
                             startIcon={
                                 isEdit ? (
                                     <SaveOutlined sx={btnIconStartSx} />

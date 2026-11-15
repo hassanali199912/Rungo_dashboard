@@ -7,6 +7,7 @@ import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import LogoCover from "@/components/ui/LogoCover";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import type { FilterViewMode } from "../contentFilter.types";
 import type { CourseItem, CoursePricing, CourseStatus } from "./course.types";
@@ -49,31 +50,7 @@ function CoursePreview({ item }: { item: CourseItem }) {
                     sx={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.88 }}
                 />
             ) : (
-                <Box sx={{ height: "100%", p: 1.75, display: "flex", flexDirection: "column", gap: 1 }}>
-                    {Array.from({ length: 4 }).map((_, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                height: 18,
-                                width: `${92 - index * 10}%`,
-                                borderRadius: 999,
-                                bgcolor: index % 2 === 0 ? "neutral.main" : "neutral.light",
-                            }}
-                        />
-                    ))}
-                    <Box sx={{ flex: 1, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.75, mt: 0.5 }}>
-                        {Array.from({ length: 3 }).map((_, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    borderRadius: 1.25,
-                                    bgcolor: index === 1 ? "primary.main" : "neutral.light",
-                                    opacity: index === 1 ? 0.85 : 0.55,
-                                }}
-                            />
-                        ))}
-                    </Box>
-                </Box>
+                <LogoCover />
             )}
 
             <Box

@@ -80,6 +80,9 @@ interface AppFormFieldProps {
     freeSolo?: boolean;
     existingMediaUrl?: string;
     existingImageUrl?: string;
+    validateFile?: (file: File) => Promise<string | null> | string | null;
+    uploadPendingLabel?: string;
+    onUploadPendingChange?: (pending: boolean) => void;
 }
 
 export default function AppFormField({
@@ -94,6 +97,9 @@ export default function AppFormField({
     freeSolo,
     existingMediaUrl,
     existingImageUrl,
+    validateFile,
+    uploadPendingLabel,
+    onUploadPendingChange,
     ...rest
 }: AppFormFieldProps) {
     const renderField = () => {
@@ -163,6 +169,9 @@ export default function AppFormField({
                         accept={rest.accept}
                         variant={uploadVariant}
                         existingMediaUrl={existingMediaUrl}
+                        validateFile={validateFile}
+                        pendingLabel={uploadPendingLabel}
+                        onPendingChange={onUploadPendingChange}
                     />
                 );
             case "poster":

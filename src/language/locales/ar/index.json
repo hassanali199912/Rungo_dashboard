@@ -501,7 +501,8 @@
         "upload_title": "رفع ملف الفيديو",
         "upload_subtitle": "ارفع مقطعًا عموديًا عالي الدقة لدرس واحد.",
         "drop_video": "اسحب ملف الفيديو وأفلته هنا",
-        "drop_hint": "يدعم 9:16 وH.264 وMP4 وMOV وWebM حتى 200MB",
+        "drop_hint": "يدعم 9:16 وH.264 وMP4 وMOV وWebM حتى 200MB، والمدة من 10 إلى 90 ثانية",
+        "checking_duration": "جارٍ التحقق من مدة الفيديو…",
         "browse": "تصفح الملفات",
         "replace": "استبدال الفيديو",
         "edit_media_hint": "سيبقى الفيديو والغلاف الحاليان ما لم تختر ملفات بديلة.",
@@ -539,7 +540,9 @@
           "load_failed": "تعذر تحميل هذا المقطع.",
           "video": "ارفع ملف فيديو عمودي",
           "video_size": "يجب ألا يتجاوز الفيديو 200MB",
-          "video_type": "استخدم MP4 أو MOV أو WebM"
+          "video_type": "استخدم MP4 أو MOV أو WebM",
+          "video_duration": "يجب أن تكون مدة الفيديو بين 10 و90 ثانية",
+          "video_duration_unreadable": "تعذر قراءة مدة هذا الفيديو. جرّب ملفًا آخر."
         }
       }
     },
@@ -655,7 +658,8 @@
         "chapter_renamed": "تم تحديث اسم الفصل.",
         "lesson_renamed": "تم تحديث عنوان الدرس.",
         "drop_title": "اسحب وأفلت مقطع درس عمودي 9:16",
-        "drop_hint": "H.264 عمودي وMP4 أو MOV أو WebM حتى 200MB",
+        "drop_hint": "H.264 عمودي وMP4 أو MOV أو WebM حتى 200MB، والمدة من 10 إلى 90 ثانية",
+        "checking_duration": "جارٍ التحقق من مدة الفيديو…",
         "browse": "تصفح الملفات",
         "lesson_title": "عنوان الدرس القادم",
         "lesson_title_placeholder": "سمّ هذا المقطع",
@@ -710,6 +714,8 @@
           "lesson_title_max": "أبقِ عنوان الدرس في 70 حرفًا أو أقل.",
           "lesson_video_size": "يجب ألا يتجاوز فيديو الدرس 200MB.",
           "lesson_video_type": "استخدم فيديو MP4 أو MOV أو WebM.",
+          "lesson_video_duration": "يجب أن تكون مدة فيديو الدرس بين 10 و90 ثانية.",
+          "lesson_video_duration_unreadable": "تعذر قراءة مدة هذا الفيديو. جرّب ملفًا آخر.",
           "attach_failed": "تعذر إرفاق هذا المقطع.",
           "outline_failed": "تعذر حفظ ترتيب الدروس.",
           "detach_failed": "تعذر إزالة هذا الدرس.",

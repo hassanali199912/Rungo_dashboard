@@ -501,7 +501,8 @@
         "upload_title": "Upload Video File",
         "upload_subtitle": "Deliver a high-resolution 9:16 vertical clip for one recording lesson.",
         "drop_video": "Drag and drop your video file here",
-        "drop_hint": "Supports vertical 9:16, H.264, MP4, MOV or WebM (up to 200MB)",
+        "drop_hint": "Supports vertical 9:16, H.264, MP4, MOV or WebM (up to 200MB, 10–90 seconds)",
+        "checking_duration": "Checking video length…",
         "browse": "Browse Files",
         "replace": "Replace Video",
         "edit_media_hint": "Your existing video and cover are kept unless you select replacements.",
@@ -539,7 +540,9 @@
           "load_failed": "We could not load this short.",
           "video": "Upload a vertical video file",
           "video_size": "Video must be 200MB or smaller",
-          "video_type": "Use MP4, MOV, or WebM"
+          "video_type": "Use MP4, MOV, or WebM",
+          "video_duration": "Video must be between 10 and 90 seconds",
+          "video_duration_unreadable": "We could not read this video's length. Try another file."
         }
       }
     },
@@ -655,7 +658,8 @@
         "chapter_renamed": "Chapter name updated.",
         "lesson_renamed": "Lesson title updated.",
         "drop_title": "Drag & drop a new 9:16 lesson short",
-        "drop_hint": "Vertical H.264, MP4, MOV, or WebM up to 200MB",
+        "drop_hint": "Vertical H.264, MP4, MOV, or WebM up to 200MB, 10–90 seconds",
+        "checking_duration": "Checking video length…",
         "browse": "Browse Files",
         "lesson_title": "Upcoming lesson title",
         "lesson_title_placeholder": "Name this short",
@@ -710,6 +714,8 @@
           "lesson_title_max": "Keep the lesson title under 70 characters.",
           "lesson_video_size": "Lesson video must be 200MB or smaller.",
           "lesson_video_type": "Use an MP4, MOV, or WebM video.",
+          "lesson_video_duration": "Lesson video must be between 10 and 90 seconds.",
+          "lesson_video_duration_unreadable": "We could not read this video's length. Try another file.",
           "attach_failed": "We could not attach this short.",
           "outline_failed": "We could not save the lesson order.",
           "detach_failed": "We could not remove this lesson.",

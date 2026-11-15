@@ -23,6 +23,7 @@ import axios from "axios";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
+import LogoCover from "@/components/ui/LogoCover";
 import { useDeleteShort } from "@/features/queryHooks/shorts/useDeleteShort";
 import { useToggleShortActive } from "@/features/queryHooks/shorts/useToggleShortActive";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
@@ -63,34 +64,7 @@ function ShortPreview({ item }: { item: ShortItem }) {
                     sx={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.88 }}
                 />
             ) : (
-                <Box sx={{ height: "100%", p: 1.75, display: "flex", flexDirection: "column", gap: 1.25 }}>
-                    <Box
-                        sx={{
-                            height: 10,
-                            width: "46%",
-                            borderRadius: 999,
-                            bgcolor: "neutral.light",
-                        }}
-                    />
-                    <Box
-                        sx={{
-                            flex: 1,
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: 1,
-                        }}
-                    >
-                        {Array.from({ length: 6 }).map((_, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    borderRadius: 1.25,
-                                    bgcolor: index % 2 === 0 ? "neutral.main" : "neutral.light",
-                                }}
-                            />
-                        ))}
-                    </Box>
-                </Box>
+                <LogoCover />
             )}
 
             <Box

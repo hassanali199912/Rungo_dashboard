@@ -27,6 +27,7 @@ import { useUpdateLessonTitle } from "@/features/queryHooks/courses/useUpdateLes
 import { useShorts } from "@/features/queryHooks/shorts/useShorts";
 import { formOutlinedSingleLineInputSx } from "@/components/form/formFieldLayout";
 import type { AddCourseValues, CourseChapterValues, CourseLessonValues } from "@/schema";
+import { formatVideoDuration, inspectShortVideoDuration } from "@/shared/media/videoDuration";
 import { btnIconStartSx } from "@/styles/btnStyle";
 import LessonVideoPlayer, { LessonVideoDialog } from "./LessonVideoPlayer";
 import StudioCard from "../StudioCard";
@@ -53,38 +54,6 @@ function axiosMessage(cause: unknown) {
 
 function createId() {
     return crypto.randomUUID();
-}
-
-function formatDuration(total: number) {
-    if (!Number.isFinite(total) || total <= 0) return "0:00";
-    const minutes = Math.floor(total / 60);
-    const seconds = Math.round(total % 60)
-        .toString()
-        .padStart(2, "0");
-    return `${minutes}:${seconds}`;
-}
-
-function readVideoDuration(file: File): Promise<string> {
-    return new Promise((resolve) => {
-        if (!file.type.startsWith("video/")) {
-            resolve("0:00");
-            return;
-        }
-        const url = URL.createObjectURL(file);
-        const video = document.createElement("video");
-        const finish = (value: string) => {
-            window.clearTimeout(timer);
-            video.onloadedmetadata = null;
-            video.onerror = null;
-            URL.revokeObjectURL(url);
-            resolve(value);
-        };
-        const timer = window.setTimeout(() => finish("0:00"), 2500);
-        video.preload = "metadata";
-        video.onloadedmetadata = () => finish(formatDuration(video.duration));
-        video.onerror = () => finish("0:00");
-        video.src = url;
-    });
 }
 
 function LessonVideoThumb({
@@ -840,12 +809,15 @@ function LessonComposer({
 }) {
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
+    const checkId = useRef(0);
     const [dragging, setDragging] = useState(false);
+    const [checkingDuration, setCheckingDuration] = useState(false);
     const [title, setTitle] = useState("");
     const [video, setVideo] = useState<File | null>(null);
+    const [videoDuration, setVideoDuration] = useState("");
 
-    const applyFile = (file?: File) => {
-        if (!file) return;
+    const applyFile = async (file?: File) => {
+        if (!file || checkingDuration) return;
         if (!isLessonVideo(file)) {
             showErrorToast(t("dashboard.courses.builder.errors.lesson_video_type"));
             return;
@@ -854,8 +826,27 @@ function LessonComposer({
             showErrorToast(t("dashboard.courses.builder.errors.lesson_video_size"));
             return;
         }
-        setVideo(file);
-        if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").slice(0, MAX_LESSON_TITLE));
+        const id = ++checkId.current;
+        setCheckingDuration(true);
+        try {
+            const result = await inspectShortVideoDuration(file);
+            if (id !== checkId.current) return;
+            if (!result.ok) {
+                showErrorToast(
+                    t(
+                        result.issue === "unreadable"
+                            ? "dashboard.courses.builder.errors.lesson_video_duration_unreadable"
+                            : "dashboard.courses.builder.errors.lesson_video_duration",
+                    ),
+                );
+                return;
+            }
+            setVideo(file);
+            setVideoDuration(formatVideoDuration(result.seconds));
+            if (!title.trim()) setTitle(file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").slice(0, MAX_LESSON_TITLE));
+        } finally {
+            if (id === checkId.current) setCheckingDuration(false);
+        }
     };
 
     const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
@@ -866,22 +857,22 @@ function LessonComposer({
 
     const handleAdd = async () => {
         const nextTitle = title.trim();
-        if (!nextTitle || !video || pending) return;
+        if (!nextTitle || !video || !videoDuration || pending || checkingDuration) return;
         if (nextTitle.length > MAX_LESSON_TITLE) {
             showErrorToast(t("dashboard.courses.builder.errors.lesson_title_max"));
             return;
         }
-        const duration = await readVideoDuration(video);
         try {
             await onAdd({
                 id: createId(),
                 title: nextTitle,
-                duration,
+                duration: videoDuration,
                 access: "coins",
                 video,
             });
             setTitle("");
             setVideo(null);
+            setVideoDuration("");
         } catch (cause) {
             const message = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
             showErrorToast(
@@ -952,12 +943,15 @@ function LessonComposer({
                         {video ? video.name : t("dashboard.courses.builder.drop_title")}
                     </Typography>
                     <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.25 }}>
-                        {t("dashboard.courses.builder.drop_hint")}
+                        {checkingDuration
+                            ? t("dashboard.courses.builder.checking_duration")
+                            : t("dashboard.courses.builder.drop_hint")}
                     </Typography>
                 </Box>
                 <AppBtn
                     customType="outline"
                     type="button"
+                    disabled={checkingDuration || pending}
                     startIcon={<FolderOpenOutlined sx={btnIconStartSx} />}
                     onClick={(event) => {
                         event.preventDefault();
@@ -972,6 +966,7 @@ function LessonComposer({
                     ref={inputRef}
                     type="file"
                     accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+                    disabled={checkingDuration || pending}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => {
                         applyFile(event.target.files?.[0]);
                         event.target.value = "";
@@ -1004,7 +999,7 @@ function LessonComposer({
                 <AppBtn
                     customType="primary"
                     type="button"
-                    disabled={!title.trim() || !video || pending}
+                    disabled={!title.trim() || !video || pending || checkingDuration}
                     startIcon={<Add sx={btnIconStartSx} />}
                     onClick={handleAdd}
                     sx={{ borderRadius: 999, minHeight: 48 }}

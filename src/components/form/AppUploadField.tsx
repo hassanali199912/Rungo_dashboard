@@ -24,6 +24,9 @@ interface AppUploadFieldProps {
     accept?: string;
     variant?: UploadVariant;
     existingMediaUrl?: string;
+    validateFile?: (file: File) => Promise<string | null> | string | null;
+    pendingLabel?: string;
+    onPendingChange?: (pending: boolean) => void;
 }
 
 function formatBytes(bytes: number) {
@@ -162,11 +165,20 @@ export default function AppUploadField({
     accept,
     variant = "dropzone",
     existingMediaUrl,
+    validateFile,
+    pendingLabel,
+    onPendingChange,
 }: AppUploadFieldProps) {
-    const { control } = useFormContext();
+    const { control, setError, clearErrors } = useFormContext();
     const { t } = useTranslation();
     const inputRef = useRef<HTMLInputElement>(null);
+    const checkId = useRef(0);
     const [dragging, setDragging] = useState(false);
+    const [checking, setChecking] = useState(false);
+
+    useEffect(() => {
+        onPendingChange?.(checking);
+    }, [checking, onPendingChange]);
 
     const uploadPlaceholder = placeholder || t("form.drop_file");
     const browseText = browseLabel || t("form.browse_files");
@@ -182,9 +194,27 @@ export default function AppUploadField({
                 render={({ field, fieldState: { error } }) => {
                     const files = normalizeFiles(field.value);
 
-                    const applyFiles = (selectedFiles: File[]) => {
-                        if (!selectedFiles.length) return;
-                        field.onChange(multiple ? [...files, ...selectedFiles] : selectedFiles[0] ?? null);
+                    const applyFiles = async (selectedFiles: File[]) => {
+                        if (!selectedFiles.length || disabled || checking) return;
+                        const nextFile = selectedFiles[0];
+                        if (!multiple && nextFile && validateFile) {
+                            const id = ++checkId.current;
+                            setChecking(true);
+                            try {
+                                const message = await validateFile(nextFile);
+                                if (id !== checkId.current) return;
+                                if (message) {
+                                    setError(name, { type: "validate", message });
+                                    return;
+                                }
+                                clearErrors(name);
+                                field.onChange(nextFile);
+                            } finally {
+                                if (id === checkId.current) setChecking(false);
+                            }
+                            return;
+                        }
+                        field.onChange(multiple ? [...files, ...selectedFiles] : nextFile ?? null);
                     };
 
                     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -195,7 +225,7 @@ export default function AppUploadField({
                     const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
                         event.preventDefault();
                         setDragging(false);
-                        if (disabled) return;
+                        if (disabled || checking) return;
                         applyFiles(Array.from(event.dataTransfer.files ?? []));
                     };
 
@@ -205,7 +235,7 @@ export default function AppUploadField({
                                 component="label"
                                 onDragOver={(event) => {
                                     event.preventDefault();
-                                    if (!disabled) setDragging(true);
+                                    if (!disabled && !checking) setDragging(true);
                                 }}
                                 onDragLeave={() => setDragging(false)}
                                 onDrop={handleDrop}
@@ -221,7 +251,7 @@ export default function AppUploadField({
                                     border: "1px dashed",
                                     borderColor: error ? "error.main" : dragging ? "primary.main" : "divider",
                                     bgcolor: dragging ? (theme) => alpha(theme.palette.primary.main, 0.06) : "surface.main",
-                                    cursor: disabled ? "not-allowed" : "pointer",
+                                    cursor: disabled || checking ? "not-allowed" : "pointer",
                                     textAlign: "center",
                                 }}
                             >
@@ -249,7 +279,7 @@ export default function AppUploadField({
                                 <AppBtn
                                     customType="outline"
                                     type="button"
-                                    disabled={disabled}
+                                    disabled={disabled || checking}
                                     startIcon={<FolderOpenOutlined sx={btnIconStartSx} />}
                                     onClick={(event) => {
                                         event.preventDefault();
@@ -265,7 +295,7 @@ export default function AppUploadField({
                                     type="file"
                                     multiple={multiple}
                                     accept={accept}
-                                    disabled={disabled}
+                                    disabled={disabled || checking}
                                     onChange={handleFileChange}
                                     sx={{ display: "none" }}
                                 />
@@ -299,6 +329,12 @@ export default function AppUploadField({
                                     ))}
                                 </Box>
                             )}
+
+                            {checking && pendingLabel ? (
+                                <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.75, display: "block" }}>
+                                    {pendingLabel}
+                                </Typography>
+                            ) : null}
 
                             {error?.message ? (
                                 <Typography variant="caption" sx={{ color: "error.main", mt: 0.5, display: "block" }}>
