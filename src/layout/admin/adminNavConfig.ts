@@ -6,7 +6,11 @@ import PlayCircleOutlined from "@mui/icons-material/PlayCircleOutlined";
 import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
 import SchoolOutlined from "@mui/icons-material/SchoolOutlined";
 import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+import SupportAgentOutlined from "@mui/icons-material/SupportAgentOutlined";
+import { isAdminRole } from "@/shared/auth/roles";
 import type { UserNavItem } from "../dashboard/DashboardLayout.types";
+
+const ASSISTANT_HIDDEN_NAV = new Set(["invoices", "assistants"]);
 
 export const adminNavItems: UserNavItem[] = [
     {
@@ -52,6 +56,13 @@ export const adminNavItems: UserNavItem[] = [
         icon: PaymentsOutlined,
     },
     {
+        key: "assistants",
+        labelKey: "admin.nav.assistants",
+        fallbackLabel: "Assistants",
+        path: "/admin/assistants",
+        icon: SupportAgentOutlined,
+    },
+    {
         key: "invoices",
         labelKey: "admin.nav.invoices",
         fallbackLabel: "Invoices",
@@ -66,3 +77,8 @@ export const adminNavItems: UserNavItem[] = [
         icon: SettingsOutlined,
     },
 ];
+
+export function navItemsForStaff(role: string | null | undefined) {
+    if (isAdminRole(role)) return adminNavItems;
+    return adminNavItems.filter((item) => !ASSISTANT_HIDDEN_NAV.has(item.key));
+}

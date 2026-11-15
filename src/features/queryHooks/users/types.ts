@@ -1,4 +1,4 @@
-export type UserRole = "student" | "instructor" | "admin";
+export type UserRole = "student" | "instructor" | "assistant" | "admin";
 
 export type UserProfile = {
     id: string;
@@ -8,6 +8,7 @@ export type UserProfile = {
     displayName: string;
     avatarUrl: string | null;
     bio: string | null;
+    isActive: boolean;
     createdAt: string;
     updatedAt: string;
 };

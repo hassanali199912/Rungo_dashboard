@@ -12,6 +12,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import SectionWrapper from "@/features/dashboard/components/SectionWrapper";
+import { useAuth } from "@/provider/AuthProvider";
+import { isAssistantRole } from "@/shared/auth/roles";
 import Sparkline from "@/features/dashboard/components/overview/Sparkline";
 import StatCard from "@/features/dashboard/components/overview/StatCard";
 
@@ -32,6 +34,8 @@ const ACTIVITY = [
 
 export default function AdminOverview() {
     const { t } = useTranslation();
+    const { user } = useAuth();
+    const assistant = isAssistantRole(user?.role);
     const [range, setRange] = useState<OverviewRangeKey>("30d");
     const [customRange, setCustomRange] = useState(defaultOverviewCustomRange);
     const max = 100;
@@ -51,10 +55,10 @@ export default function AdminOverview() {
             >
                 <Box>
                     <Typography sx={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase", color: "text.secondary", mb: 0.75 }}>
-                        {t("admin.overview.eyebrow")}
+                        {t(assistant ? "admin.overview.eyebrow_assistant" : "admin.overview.eyebrow")}
                     </Typography>
                     <Typography component="h1" sx={{ fontWeight: 800, fontSize: { xs: 28, md: 36 }, letterSpacing: "-0.03em", lineHeight: 1.15 }}>
-                        {t("admin.overview.welcome")}
+                        {t(assistant ? "admin.overview.welcome_assistant" : "admin.overview.welcome")}
                     </Typography>
                 </Box>
                 <OverviewRangeControl

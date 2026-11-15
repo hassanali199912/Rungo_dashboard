@@ -1,6 +1,5 @@
 import IosShareOutlined from "@mui/icons-material/IosShareOutlined";
 import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import VisibilityOffOutlined from "@mui/icons-material/VisibilityOffOutlined";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
@@ -129,7 +128,6 @@ function CourseEditor({ courseId }: { courseId: string }) {
             courseId={courseId}
             defaultValues={outlineToForm(outlineQuery.data)}
             existingCoverUrl={getCourseMediaUrl(outlineQuery.data.coverUrl)}
-            published={Boolean(outlineQuery.data.publishedAt)}
         />
     );
 }
@@ -138,12 +136,10 @@ function CourseForm({
     courseId,
     defaultValues,
     existingCoverUrl,
-    published = false,
 }: {
     courseId?: string;
     defaultValues?: AddCourseValues;
     existingCoverUrl?: string;
-    published?: boolean;
 }) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -225,16 +221,6 @@ function CourseForm({
         }
     };
 
-    const setPublished = async (next: boolean) => {
-        if (!courseId) return;
-        try {
-            await updateCourse.mutateAsync({ courseId, published: next });
-            showSuccessToast(t(next ? "dashboard.courses.builder.published" : "dashboard.courses.builder.unpublished"));
-        } catch (cause) {
-            showErrorToast(t("dashboard.courses.builder.errors.update_failed"), errorDetail(cause));
-        }
-    };
-
     return (
         <FormWrapper methods={methods} onSubmit={onSubmit}>
             <SectionWrapper
@@ -260,21 +246,6 @@ function CourseForm({
                                     },
                                 ]
                                 : []),
-                            published
-                                ? {
-                                    label: t("dashboard.courses.builder.unpublish"),
-                                    icon: VisibilityOffOutlined,
-                                    variant: "outline",
-                                    onClick: () => void methods.handleSubmit(() => setPublished(false))(),
-                                    disabled: isSaving,
-                                }
-                                : {
-                                    label: t("dashboard.courses.builder.publish"),
-                                    icon: IosShareOutlined,
-                                    type: "button",
-                                    onClick: () => void methods.handleSubmit(() => setPublished(true))(),
-                                    disabled: isSaving,
-                                },
                         ]
                         : [
                             {

@@ -25,7 +25,6 @@ import { useNavigate } from "react-router-dom";
 import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
 import LogoCover from "@/components/ui/LogoCover";
 import { useDeleteShort } from "@/features/queryHooks/shorts/useDeleteShort";
-import { useToggleShortActive } from "@/features/queryHooks/shorts/useToggleShortActive";
 import { btnIconSlotReset, btnIconStartSx } from "@/styles/btnStyle";
 import type { FilterViewMode } from "../contentFilter.types";
 import type { ShortItem, ShortStatus } from "./short.types";
@@ -184,7 +183,6 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
     const navigate = useNavigate();
     const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const toggleActive = useToggleShortActive();
     const deleteShort = useDeleteShort();
 
     const openMenu = (event: MouseEvent<HTMLElement>) => setMenuAnchor(event.currentTarget);
@@ -204,17 +202,6 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
             showErrorToast(t("dashboard.shorts.delete_failed"), detail);
         }
     };
-    const handleToggleActive = async () => {
-        closeMenu();
-        try {
-            await toggleActive.mutateAsync(item.id);
-            showSuccessToast(t("dashboard.shorts.visibility_updated"));
-        } catch (cause) {
-            const detail = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
-            showErrorToast(t("dashboard.shorts.toggle_active_failed"), detail);
-        }
-    };
-
     const stats = item.engagement
         ? [
               { key: "likes", label: t("dashboard.shorts.stat_likes"), value: item.engagement.likes.toLocaleString() },
@@ -250,15 +237,6 @@ function ShortMeta({ item, compact }: { item: ShortItem; compact?: boolean }) {
                 </IconButton>
                 <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
                     <MenuItem onClick={handleEdit}>{t("dashboard.shorts.action_edit")}</MenuItem>
-                    {typeof item.isActive === "boolean" && (
-                        <MenuItem onClick={handleToggleActive} disabled={toggleActive.isPending}>
-                            {t(
-                                item.isActive
-                                    ? "dashboard.shorts.action_hide"
-                                    : "dashboard.shorts.action_make_public",
-                            )}
-                        </MenuItem>
-                    )}
                     <MenuItem onClick={openDeleteDialog} sx={{ color: "error.main", gap: 1 }}>
                         <DeleteOutlineOutlined fontSize="small" />
                         {t("dashboard.shorts.action_delete")}

@@ -25,6 +25,7 @@ interface UserSidebarProps {
     onToggleCollapsed: () => void;
     onNavigate?: () => void;
     homePath?: string;
+    roleLabel?: string;
 }
 
 function isItemActive(pathname: string, path?: string, homePath = "/dashboard") {
@@ -39,6 +40,7 @@ export default function DashboardSidebar({
     onToggleCollapsed,
     onNavigate,
     homePath = "/dashboard",
+    roleLabel,
 }: UserSidebarProps) {
     const { t } = useTranslation();
     const { pathname } = useLocation();
@@ -123,9 +125,16 @@ export default function DashboardSidebar({
                 >
                     <Box component="img" src={LOGO_SRC} alt={t("brand.name")} sx={{ width: 32, height: 32 }} />
                     {!collapsed && (
-                        <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.03em" }}>
-                            {t("brand.name")}
-                        </Typography>
+                        <Box sx={{ minWidth: 0 }}>
+                            <Typography sx={{ fontWeight: 800, fontSize: 16, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+                                {t("brand.name")}
+                            </Typography>
+                            {roleLabel ? (
+                                <Typography sx={{ fontSize: 11, fontWeight: 800, color: "primary.main", lineHeight: 1.3 }}>
+                                    {roleLabel}
+                                </Typography>
+                            ) : null}
+                        </Box>
                     )}
                 </Box>
                 <IconButton size="small" onClick={onToggleCollapsed} sx={{ display: { xs: "none", md: "inline-flex" } }}>

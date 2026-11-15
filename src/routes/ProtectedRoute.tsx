@@ -2,10 +2,10 @@ import { Navigate, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import RunGoLoader from "@/components/ui/RunGoLoader";
 import { useAuth } from "@/provider/AuthProvider";
-import { homePathForRole, isAdminRole } from "@/shared/auth/roles";
+import { homePathForRole, isAdminRole, isStaffRole } from "@/shared/auth/roles";
 
 type ProtectedRouteProps = {
-    allow: "admin" | "instructor";
+    allow: "admin" | "staff" | "instructor";
     children: ReactNode;
 };
 
@@ -25,7 +25,11 @@ export default function ProtectedRoute({ allow, children }: ProtectedRouteProps)
         return <Navigate to={homePathForRole(user?.role)} replace />;
     }
 
-    if (allow === "instructor" && isAdminRole(user?.role)) {
+    if (allow === "staff" && !isStaffRole(user?.role)) {
+        return <Navigate to={homePathForRole(user?.role)} replace />;
+    }
+
+    if (allow === "instructor" && isStaffRole(user?.role)) {
         return <Navigate to="/admin" replace />;
     }
 

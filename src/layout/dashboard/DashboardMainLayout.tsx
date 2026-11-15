@@ -12,9 +12,10 @@ const collapsedWidth = 84;
 type DashboardMainLayoutProps = {
     navItems: UserNavItem[];
     homePath?: string;
+    roleLabel?: string;
 };
 
-export default function DashboardMainLayout({ navItems, homePath = "/dashboard" }: DashboardMainLayoutProps) {
+export default function DashboardMainLayout({ navItems, homePath = "/dashboard", roleLabel }: DashboardMainLayoutProps) {
     const theme = useTheme();
     const { i18n } = useTranslation();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -54,6 +55,7 @@ export default function DashboardMainLayout({ navItems, homePath = "/dashboard" 
                         collapsed={collapsed}
                         onToggleCollapsed={toggleSidebar}
                         homePath={homePath}
+                        roleLabel={roleLabel}
                     />
                 </Box>
             )}
@@ -70,6 +72,7 @@ export default function DashboardMainLayout({ navItems, homePath = "/dashboard" 
                     onToggleCollapsed={toggleSidebar}
                     onNavigate={closeMobileSidebar}
                     homePath={homePath}
+                    roleLabel={roleLabel}
                 />
             </Drawer>
 

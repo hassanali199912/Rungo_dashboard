@@ -72,6 +72,22 @@ export const renewSubscriptionSchema = z.object({
     cvv: z.string().regex(/^\d{3,4}$/, "dashboard.subscription.errors.cvv"),
 });
 
+export const assistantPasswordSchema = z
+    .object({
+        password: z.string().min(8, "auth.errors.password_min").max(100, "admin.assistants.password_max"),
+        confirmPassword: z.string().min(1, "auth.errors.password_required"),
+    })
+    .superRefine((data, ctx) => {
+        if (data.password !== data.confirmPassword) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["confirmPassword"],
+                message: "dashboard.settings.errors.password_mismatch",
+            });
+        }
+    });
+
 export type ProfileSettingsValues = z.infer<typeof profileSettingsSchema>;
+export type AssistantPasswordValues = z.infer<typeof assistantPasswordSchema>;
 export type PasswordSettingsValues = z.infer<typeof passwordSettingsSchema>;
 export type RenewSubscriptionValues = z.infer<typeof renewSubscriptionSchema>;

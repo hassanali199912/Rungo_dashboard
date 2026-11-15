@@ -52,7 +52,7 @@ export default function Courses() {
                 description: item.description,
                 category: item.tagCodes[0] ?? t("dashboard.courses.uncategorized"),
                 domain: getCourseDomain(item.tagCodes),
-                status: item.publishedAt ? "published" : "draft",
+                status: item.publishedAt ? "published" : "review",
                 pricing: item.price === 0 ? "free" : "coins",
                 lessons: item.lessonCount ?? 0,
                 duration: "—",
@@ -149,7 +149,7 @@ export default function Courses() {
                     statusOptions={[
                         { value: "all", label: t("dashboard.courses.status_all"), count: counts.all },
                         { value: "published", label: t("dashboard.courses.status_published"), count: counts.published },
-                        { value: "draft", label: t("dashboard.courses.status_draft"), count: counts.draft },
+                        { value: "review", label: t("dashboard.courses.status_review"), count: counts.review },
                     ]}
                 />
             </Box>

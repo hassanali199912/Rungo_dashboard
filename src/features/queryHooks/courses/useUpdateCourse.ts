@@ -9,7 +9,6 @@ export type UpdateCourseInput = {
     tags?: string[];
     price?: number;
     cover?: File;
-    published?: boolean;
 };
 
 export function updateCourseApi(input: UpdateCourseInput) {
@@ -19,7 +18,6 @@ export function updateCourseApi(input: UpdateCourseInput) {
     if (input.tags !== undefined) formData.append("tags", JSON.stringify(input.tags));
     if (input.price !== undefined) formData.append("price", String(input.price));
     if (input.cover) formData.append("cover", input.cover);
-    if (input.published !== undefined) formData.append("published", input.published ? "true" : "false");
 
     return client.patch(`/courses/${input.courseId}`, formData, {
         maxBodyLength: Infinity,

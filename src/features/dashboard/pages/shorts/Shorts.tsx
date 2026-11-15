@@ -49,7 +49,7 @@ export default function Shorts() {
                 description: item.description,
                 category: item.tagCodes[0] ?? t("dashboard.shorts.uncategorized"),
                 domain: getShortDomain(item.tagCodes),
-                status: item.publishedAt ? "published" : "draft",
+                status: item.isActive ? "published" : "review",
                 duration: "—",
                 tags: item.tagCodes.map((tag, index) => ({
                     label: tag,
@@ -149,7 +149,7 @@ export default function Shorts() {
                     statusOptions={[
                         { value: "all", label: t("dashboard.shorts.status_all"), count: counts.all },
                         { value: "published", label: t("dashboard.shorts.status_published"), count: counts.published },
-                        { value: "draft", label: t("dashboard.shorts.status_draft"), count: counts.draft },
+                        { value: "review", label: t("dashboard.shorts.status_review"), count: counts.review },
                     ]}
                 />
             </Box>

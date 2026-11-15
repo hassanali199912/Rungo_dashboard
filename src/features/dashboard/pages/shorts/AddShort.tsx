@@ -168,7 +168,7 @@ export default function AddShort() {
                     cover: values.posters?.[0],
                     onUploadProgress: setUploadProgress,
                 });
-                showSuccessToast(t("dashboard.shorts.publisher.published"));
+                showSuccessToast(t("dashboard.shorts.publisher.submitted"));
             }
             navigate("/dashboard/shorts");
         } catch (cause) {
@@ -288,7 +288,7 @@ export default function AddShort() {
                         label: t(
                             isEdit
                                 ? "dashboard.shorts.publisher.save_changes"
-                                : "dashboard.shorts.publisher.publish_feed",
+                                : "dashboard.shorts.publisher.submit_review",
                         ),
                         icon: isEdit ? SaveOutlined : IosShareOutlined,
                         type: "submit",
@@ -447,7 +447,7 @@ export default function AddShort() {
                             {t(
                                 isEdit
                                     ? "dashboard.shorts.publisher.save_changes"
-                                    : "dashboard.shorts.publisher.publish_now",
+                                    : "dashboard.shorts.publisher.submit_review",
                             )}
                         </AppBtn>
                     </Box>

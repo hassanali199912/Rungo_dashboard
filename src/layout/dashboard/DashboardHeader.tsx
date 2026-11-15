@@ -18,7 +18,7 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/divTools/LanguageSwitcher";
 import { useAuth } from "@/provider/AuthProvider";
 import { useLogoutHook as useLogout } from "@/provider/useLogout";
-import { isAdminRole } from "@/shared/auth/roles";
+import { isAssistantRole, isStaffRole } from "@/shared/auth/roles";
 import DashboardBreadcrumbs from "./DashboardBreadcrumbs";
 import NotificationBell from "./NotificationBell";
 
@@ -36,9 +36,10 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
     const openProfile = (event: MouseEvent<HTMLElement>) => setProfileAnchor(event.currentTarget);
     const closeProfile = () => setProfileAnchor(null);
     const profileName = user?.name || t("dashboard.profile_name");
-    const isAdmin = pathname.startsWith("/admin") || isAdminRole(user?.role);
-    const settingsPath = isAdmin ? "/admin/settings" : "/dashboard/settings";
-    const searchKey = isAdmin ? "admin.search" : "dashboard.search";
+    const isStaff = pathname.startsWith("/admin") || isStaffRole(user?.role);
+    const assistant = isAssistantRole(user?.role);
+    const settingsPath = isStaff ? "/admin/settings" : "/dashboard/settings";
+    const searchKey = assistant ? "admin.search_assistant" : isStaff ? "admin.search" : "dashboard.search";
 
     return (
         <Box
@@ -97,7 +98,7 @@ export default function DashboardHeader({ onMenuClick }: UserHeaderProps) {
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     <LanguageSwitcher variant="inline" />
-                    {!isAdmin ? <NotificationBell /> : null}
+                    <NotificationBell />
                     <IconButton
                         onClick={openProfile}
                         sx={{

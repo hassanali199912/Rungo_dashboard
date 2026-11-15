@@ -2,11 +2,13 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import AppBtn from "@/components/ui/AppBtn";
+import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
 import ContentFilterBar from "@/features/dashboard/components/ContentFilterBar";
 import { defaultContentFilter, type ContentFilterState } from "@/features/dashboard/components/contentFilter.types";
 import SectionWrapper from "@/features/dashboard/components/SectionWrapper";
 import { useShort } from "@/features/queryHooks/shorts/useShort";
 import { useShorts, type Short } from "@/features/queryHooks/shorts/useShorts";
+import { useToggleShortActive } from "@/features/queryHooks/shorts/useToggleShortActive";
 import AdminDataTable, { AdminTableText, type AdminTableColumn } from "../../components/AdminDataTable";
 import LessonPreviewModal from "../../components/LessonPreviewModal";
 import StatusBadge from "../../components/StatusBadge";
@@ -35,6 +37,7 @@ export default function AdminShorts() {
     const [filter, setFilter] = useState<ContentFilterState>(defaultContentFilter);
     const [previewId, setPreviewId] = useState<string | null>(null);
     const shortsQuery = useShorts(SHORTS_PARAMS);
+    const toggleActive = useToggleShortActive();
     const previewQuery = useShort(previewId ?? "", Boolean(previewId));
     const shorts = shortsQuery.data?.items ?? [];
     const preview = shorts.find((row) => row.id === previewId) ?? null;
@@ -142,11 +145,28 @@ export default function AdminShorts() {
                     rows={visible}
                     emptyLabel={t("admin.shorts.empty")}
                     ariaLabel={t("admin.shorts.title")}
-                    getActions={() => [
+                    getActions={(row) => [
                         {
                             key: "preview",
                             label: t("admin.shorts.preview"),
                             onClick: (item) => setPreviewId(item.id),
+                        },
+                        {
+                            key: "visibility",
+                            label: row.isActive ? t("admin.content.hide") : t("admin.shorts.make_public"),
+                            tone: row.isActive ? "danger" : "success",
+                            onClick: async (item) => {
+                                if (toggleActive.isPending) return;
+                                const makingPublic = !item.isActive;
+                                try {
+                                    await toggleActive.mutateAsync(item.id);
+                                    showSuccessToast(
+                                        t(makingPublic ? "admin.shorts.shown" : "admin.shorts.hidden"),
+                                    );
+                                } catch {
+                                    showErrorToast(t("admin.shorts.toggle_failed"));
+                                }
+                            },
                         },
                     ]}
                 />

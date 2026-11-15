@@ -13,10 +13,32 @@ import { useNotificationSocket } from "@/features/queryHooks/notifications/useNo
 import { useNotifications } from "@/features/queryHooks/notifications/useNotifications";
 import { useUnreadNotificationCount } from "@/features/queryHooks/notifications/useUnreadNotificationCount";
 import type { NotificationItem } from "@/features/queryHooks/notifications/types";
+import { useAuth } from "@/provider/AuthProvider";
+import { isStaffRole } from "@/shared/auth/roles";
 
-function notificationPath(type: string) {
-    if (type.startsWith("subscription.")) return "/dashboard/subscription";
-    if (type.startsWith("account.")) return "/dashboard/settings";
+function dataId(data: NotificationItem["data"], key: string) {
+    const value = data?.[key];
+    return typeof value === "string" && value ? value : null;
+}
+
+function notificationPath(item: NotificationItem, staff: boolean) {
+    const courseId = dataId(item.data, "courseId");
+    const shortId = dataId(item.data, "shortId");
+
+    if (item.type === "course.submitted" || item.type === "course.in_review") {
+        if (staff) return "/admin/courses";
+        return courseId ? `/dashboard/courses/${courseId}` : "/dashboard/courses";
+    }
+    if (item.type === "short.submitted" || item.type === "short.in_review") {
+        if (staff) return "/admin/shorts";
+        return shortId ? `/dashboard/shorts/${shortId}/edit` : "/dashboard/shorts";
+    }
+    if (item.type.startsWith("subscription.")) {
+        return staff ? "/admin/subscriptions" : "/dashboard/subscription";
+    }
+    if (item.type.startsWith("account.")) {
+        return staff ? "/admin/settings" : "/dashboard/settings";
+    }
     return null;
 }
 
@@ -32,6 +54,8 @@ function formatWhen(value: string, language: string) {
 export default function NotificationBell() {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const staff = isStaffRole(user?.role);
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const open = Boolean(anchor);
     const connected = useNotificationSocket(true);
@@ -46,7 +70,7 @@ export default function NotificationBell() {
     const closePanel = () => setAnchor(null);
 
     const openItem = async (item: NotificationItem) => {
-        const path = notificationPath(item.type);
+        const path = notificationPath(item, staff);
         closePanel();
         if (!item.readAt) {
             try {

@@ -2,10 +2,13 @@ import { Breadcrumbs, Link, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/provider/AuthProvider";
+import { isAssistantRole } from "@/shared/auth/roles";
 
 const DashboardBreadcrumbs = () => {
     const { pathname } = useLocation();
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
 
     const breadcrumbs = useMemo(() => {
         const resolveLabel = (segment: string, parent?: string, navNs = "dashboard") => {
@@ -25,7 +28,7 @@ const DashboardBreadcrumbs = () => {
             const rest = pathname.replace(new RegExp(`^${base}/?`), "");
             const crumbs = [
                 {
-                    label: t(isAdmin ? "admin.crumb_admin" : "dashboard.crumb_instructor"),
+                    label: t(isAdmin ? (isAssistantRole(user?.role) ? "admin.crumb_assistant" : "admin.crumb_admin") : "dashboard.crumb_instructor"),
                     path: base,
                 },
                 {
@@ -51,7 +54,7 @@ const DashboardBreadcrumbs = () => {
             { label: t("dashboard.crumb_instructor"), path: "/dashboard" },
             { label: t("dashboard.crumb_studio"), path: "/dashboard" },
         ];
-    }, [pathname, t, i18n]);
+    }, [pathname, t, i18n, user?.role]);
 
     return (
         <Breadcrumbs
