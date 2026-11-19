@@ -2,8 +2,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
-import { getAccessToken, onApiEvent, setStoredUser } from '@/config/apis';
-import { useLogin, type DashboardUser } from '@/features/queryHooks/auth/useLogin';
+import { getAccessToken, onApiEvent, setAuthSession, setStoredUser } from '@/config/apis';
+import { useLogin, type DashboardUser, type LoginResponse } from '@/features/queryHooks/auth/useLogin';
 import { useLogout } from '@/features/queryHooks/auth/useLogout';
 import { useMe } from '@/features/queryHooks/auth/useMe';
 import { authKeys } from '@/shared/query/authKeys';
@@ -26,6 +26,7 @@ interface AuthContextValue {
     isLoading: boolean;
     error: string | null;
     login: (credentials: { email: string; password: string }) => Promise<Actor>;
+    establishSession: (session: LoginResponse) => Actor;
     logout: () => Promise<void>;
     refresh: () => Promise<void>;
     updateUser: (patch: Partial<Actor>) => void;
@@ -77,6 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return toActor(data.user);
     }, [loginWithPassword]);
 
+    const establishSession = useCallback((session: LoginResponse) => {
+        setAuthSession({
+            accessToken: session.accessToken,
+            refreshToken: session.refreshToken,
+            user: session.user,
+        });
+        queryClient.setQueryData(authKeys.me(), session.user);
+        setHasToken(true);
+        return toActor(session.user);
+    }, [queryClient]);
+
     const logout = useCallback(async () => {
         await logoutSession();
         setHasToken(false);
@@ -108,10 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         login,
+        establishSession,
         logout,
         refresh,
         updateUser,
-    }), [user, status, isAuthenticated, isLoading, error, login, logout, refresh, updateUser]);
+    }), [user, status, isAuthenticated, isLoading, error, login, establishSession, logout, refresh, updateUser]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

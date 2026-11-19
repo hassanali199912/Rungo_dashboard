@@ -1,6 +1,4 @@
 import AlternateEmail from "@mui/icons-material/AlternateEmail";
-import Code from "@mui/icons-material/Code";
-import LinkOutlined from "@mui/icons-material/LinkOutlined";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import PersonOutlined from "@mui/icons-material/PersonOutlined";
 import RocketLaunch from "@mui/icons-material/RocketLaunch";
@@ -12,7 +10,7 @@ import { Link as RouterLink, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AppFormField from "@/components/form/AppFormField";
 import { showErrorToast, showSuccessToast } from "@/components/ui/appToast";
-import client from "@/config/apis";
+import { useRegister } from "@/features/queryHooks/auth/useRegister";
 import { useAuth } from "@/provider/AuthProvider";
 import { registerSchema, type RegisterValues } from "@/schema";
 import { homePathForRole } from "@/shared/auth/roles";
@@ -23,16 +21,16 @@ const LOGO_SRC = encodeURI("/mainLogo.png");
 export default function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { login, isAuthenticated, user } = useAuth();
+    const { establishSession, isAuthenticated, user } = useAuth();
+    const registerAccount = useRegister();
 
     const methods = useForm<RegisterValues>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            name: "",
+            displayName: "",
             email: "",
-            expertise: "",
-            portfolio: "",
             password: "",
+            confirmPassword: "",
             terms: false,
         },
     });
@@ -41,35 +39,22 @@ export default function Register() {
         return <Navigate to={homePathForRole(user?.role)} replace />;
     }
 
-    const domainOptions = [
-        { value: "frontend", label: t("auth.domains.frontend") },
-        { value: "sports", label: t("auth.domains.sports") },
-        { value: "fitness", label: t("auth.domains.fitness") },
-        { value: "design", label: t("auth.domains.design") },
-        { value: "business", label: t("auth.domains.business") },
-        { value: "education", label: t("auth.domains.education") },
-    ];
-
     const onSubmit = methods.handleSubmit(async (values) => {
         try {
-            await client.post(
-                "/auth/register",
-                {
-                    name: values.name,
-                    email: values.email,
-                    password: values.password,
-                    expertise: values.expertise,
-                    portfolio: values.portfolio || undefined,
-                },
-                { skipAuthHandling: true },
-            );
-            const actor = await login({ email: values.email, password: values.password });
+            const session = await registerAccount.mutateAsync({
+                email: values.email.trim(),
+                password: values.password,
+                role: "instructor",
+                displayName: values.displayName.trim(),
+                avatarUrl: null,
+                bio: null,
+            });
+            const actor = establishSession(session);
             showSuccessToast(t("auth.toasts.register_ok"));
             navigate(homePathForRole(actor.role), { replace: true });
         } catch (cause) {
-            const detail = axios.isAxiosError(cause)
-                ? cause.response?.data?.message
-                : undefined;
+            const message = axios.isAxiosError(cause) ? cause.response?.data?.message : undefined;
+            const detail = Array.isArray(message) ? message.filter((item) => typeof item === "string").join(" ") : message;
             showErrorToast(t("auth.errors.register_failed"), detail);
         }
     });
@@ -147,7 +132,7 @@ export default function Register() {
                         }}
                     >
                         <AppFormField
-                            name="name"
+                            name="displayName"
                             type="text"
                             label={t("auth.register.name")}
                             placeholder={t("auth.register.name_placeholder")}
@@ -163,27 +148,18 @@ export default function Register() {
                     </Box>
 
                     <AppFormField
-                        name="expertise"
-                        type="autocomplete"
-                        label={t("auth.register.expertise")}
-                        placeholder={t("auth.register.expertise_placeholder")}
-                        options={domainOptions}
-                        startIcon={<Code sx={{ fontSize: 18 }} />}
-                    />
-
-                    <AppFormField
-                        name="portfolio"
-                        type="text"
-                        label={t("auth.register.portfolio")}
-                        placeholder={t("auth.register.portfolio_placeholder")}
-                        startIcon={<LinkOutlined sx={{ fontSize: 18 }} />}
-                    />
-
-                    <AppFormField
                         name="password"
                         type="passwordWithBar"
                         label={t("auth.register.password")}
                         placeholder={t("auth.register.password_placeholder")}
+                        startIcon={<LockOutlined sx={{ fontSize: 18 }} />}
+                    />
+
+                    <AppFormField
+                        name="confirmPassword"
+                        type="password"
+                        label={t("auth.register.confirm_password")}
+                        placeholder={t("auth.register.confirm_password_placeholder")}
                         startIcon={<LockOutlined sx={{ fontSize: 18 }} />}
                     />
 
