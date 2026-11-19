@@ -53,7 +53,7 @@ export default function Register() {
     const onSubmit = methods.handleSubmit(async (values) => {
         try {
             await client.post(
-                "/api/app/v1/auth/register",
+                "/auth/register",
                 {
                     name: values.name,
                     email: values.email,
